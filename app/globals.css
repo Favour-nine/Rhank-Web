@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes rhankGlow {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1);   opacity: 0.45; }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.06);  opacity: 0.65; }
+  100% { transform: translate3d(-6%, -4%, 0) scale(1);   opacity: 0.45; }
+}
+
+.rhank-glow {
+  animation: rhankGlow 10s ease-in-out infinite;
+  filter: blur(80px);
+}
+
