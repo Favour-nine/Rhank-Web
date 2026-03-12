@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
@@ -60,11 +61,63 @@ export default function ThreeBg() {
     camera.position.setX(-3);
 
     // --- Objects
-    const torus = new THREE.Mesh(
-      new THREE.TorusGeometry(10, 3, 16, 100),
-      new THREE.MeshStandardMaterial({ color: 0xff6347 })
-    );
-    scene.add(torus);
+    let model: THREE.Group | null = null;
+    let scanMat: THREE.ShaderMaterial | null = null;
+    const objLoader = new OBJLoader();
+    objLoader.load("/bitman.obj", (obj) => {
+      model = obj;
+
+      scanMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uColor: { value: new THREE.Color(0xffffff) },
+        },
+        vertexShader: `
+          varying vec3 vWorldPos;
+          void main() {
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPos = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform vec3 uColor;
+          varying vec3 vWorldPos;
+          void main() {
+            float freq = 1.2;
+            float lineWidth = 0.35;
+            float band = fract(vWorldPos.y * freq - uTime * 0.4);
+            if (band > lineWidth) discard;
+            float fade = 1.0 - (band / lineWidth);
+            gl_FragColor = vec4(uColor, fade * 0.9);
+          }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+
+      obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          (child as THREE.Mesh).material = scanMat!;
+        }
+      });
+
+      // Auto-center and scale to fill roughly the same space the torus did
+      const box = new THREE.Box3().setFromObject(obj);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const targetSize = 18;
+      const scale = targetSize / maxDim;
+
+      obj.scale.setScalar(scale);
+      // Re-center after scaling
+      obj.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+
+      scene.add(obj);
+    });
 
     // --- Lights
     const pointLight = new THREE.PointLight(0xffffff);
@@ -194,10 +247,15 @@ export default function ThreeBg() {
         mat.emissiveIntensity = 0.6 * data.opacity;
       });
 
-      // Torus rotation
-      torus.rotation.x += 0.01;
-      torus.rotation.y += 0.005;
-      torus.rotation.z += 0.01;
+      // Model rotation + scan line time
+      if (model) {
+        model.rotation.x += 0.01;
+        model.rotation.y += 0.005;
+        model.rotation.z += 0.01;
+      }
+      if (scanMat) {
+        scanMat.uniforms.uTime.value = time;
+      }
 
       composer.render();
     };
@@ -210,9 +268,15 @@ export default function ThreeBg() {
       window.removeEventListener("resize", onResize);
       document.removeEventListener("scroll", moveCamera);
 
-      // Dispose torus
-      torus.geometry.dispose();
-      (torus.material as THREE.Material).dispose();
+      // Dispose model
+      if (model) {
+        model.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).geometry.dispose();
+          }
+        });
+      }
+      scanMat?.dispose();
 
       // Dispose stars
       stars.forEach((s) => {
