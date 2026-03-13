@@ -27,24 +27,24 @@ export default function HeroCtaPanel() {
   const content = useMemo(() => {
     if (open === "secure") {
       return {
-        title: "Secure your Rhank",
+        title: "Get notified at launch",
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-black/70">
             <p>
-              Register once to reserve your Rhank position. Phase 1 focuses on a
-              clean, fair entry system with anti-abuse protections.
+              Rhank is in development. Leave your email and be the first to
+              create a Rhank when we launch.
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Unique Rhank ID</li>
-              <li>Early access status</li>
-              <li>Duplicate &amp; bot protection</li>
+              <li>Create leaderboards for anything</li>
+              <li>Earn Rhank tokens by topping boards</li>
+              <li>Early access for signups</li>
             </ul>
             <div className="pt-2">
               <a
                 href="#register"
                 className="inline-flex border border-black/20 px-4 py-2 text-[11px] font-semibold tracking-[0.22em] uppercase text-black transition-colors hover:bg-black hover:text-white"
               >
-                Go to registration
+                Leave your email
               </a>
             </div>
           </div>
@@ -59,18 +59,13 @@ export default function HeroCtaPanel() {
           <div className="space-y-3 text-sm leading-relaxed text-black/70">
             <ol className="list-decimal pl-5 space-y-2">
               <li>
-                <span className="font-semibold text-black">Register</span> —
-                choose a username and verify once.
+                <span className="font-semibold text-black">Create a Rhank</span>                 pick any subject, set the rules, open it up.
               </li>
               <li>
-                <span className="font-semibold text-black">
-                  Secure your place
-                </span>{" "}
-                — your position is reserved early.
+                <span className="font-semibold text-black">Enter & compete</span>                 anyone can join and get placed on the live leaderboard.
               </li>
               <li>
-                <span className="font-semibold text-black">Participate</span> —
-                leaderboards and community ranking layers come later.
+                <span className="font-semibold text-black">Top the board</span>                 reach #1 and earn Rhank tokens.
               </li>
             </ol>
             <div className="pt-2">
@@ -106,7 +101,7 @@ export default function HeroCtaPanel() {
               : "bg-white/90 text-black hover:bg-white",
           ].join(" ")}
         >
-          Secure your Rhank
+          Get notified
         </button>
 
         <button
