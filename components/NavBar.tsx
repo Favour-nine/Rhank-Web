@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 
 const LINKS = [
   { href: "#how", label: "How it works" },
@@ -34,9 +35,9 @@ function MobileMenu({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999]">
-      {/* white blur overlay */}
+      {/* dark overlay */}
       <div
-        className="absolute inset-0 bg-white/12 backdrop-blur-2xl"
+        className="absolute inset-0 bg-black/85 backdrop-blur-xl"
         onClick={close}
       />
 
@@ -59,7 +60,10 @@ function MobileMenu({
           </span>
         </button>
 
-        <div className="mx-auto h-full max-w-6xl px-6 pt-24 pb-10">
+        <div className="mx-auto h-full max-w-6xl px-6 pt-4 pb-10">
+          <div className="mb-8 py-2">
+            <Image src="/r_white.svg" alt="Rhank" width={48} height={20} />
+          </div>
           <div className="border-t border-white/20 pt-10">
             <nav className="flex flex-col gap-7 text-sm font-medium tracking-[0.20em] uppercase text-white/90">
               {LINKS.map((l) => (
@@ -101,6 +105,19 @@ function MobileMenu({
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
+  const [onWhite, setOnWhite] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      const ws = document.getElementById("white-section");
+      if (!ws) return;
+      const { top, bottom } = ws.getBoundingClientRect();
+      setOnWhite(top <= 64 && bottom > 64);
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -113,23 +130,26 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-black/30 backdrop-blur">
+      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${onWhite ? "bg-white/80" : "bg-black/30"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           {/* Brand */}
-          <a href="#" className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-white/80" />
-            <span className="text-xs font-semibold tracking-[0.28em] uppercase">
-              RHANK
-            </span>
+          <a href="#" className="flex items-center">
+            <Image
+              src={onWhite ? "/r_black.svg" : "/r_white.svg"}
+              alt="Rhank"
+              width={48}
+              height={20}
+              priority
+            />
           </a>
 
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase text-white/60 md:flex">
+          <nav className={`hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase md:flex transition-colors duration-300 ${onWhite ? "text-black/50" : "text-white/60"}`}>
             {LINKS.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="transition-colors hover:text-white"
+                className={`transition-colors ${onWhite ? "hover:text-black" : "hover:text-white"}`}
               >
                 {l.label}
               </a>
@@ -139,7 +159,7 @@ export default function NavBar() {
           {/* Desktop CTA */}
           <a
             href="#register"
-            className="hidden md:inline-flex border border-white/20 px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200"
+            className={`hidden md:inline-flex border px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase transition-colors duration-200 ${onWhite ? "border-black/20 text-black hover:bg-black hover:text-white" : "border-white/20 text-white hover:bg-white hover:text-black"}`}
           >
             Secure your Rhank
           </a>
@@ -150,7 +170,7 @@ export default function NavBar() {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="md:hidden inline-flex items-center justify-center p-2 text-white/90 hover:text-white transition-colors"
+            className={`md:hidden inline-flex items-center justify-center p-2 transition-colors ${onWhite ? "text-black/70 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
             <span className="sr-only">Menu</span>
             <span className="relative block h-5 w-6">

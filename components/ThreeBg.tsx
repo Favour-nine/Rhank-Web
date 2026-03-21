@@ -274,8 +274,8 @@ export default function ThreeBg() {
       spaceTexture.wrapS = THREE.RepeatWrapping;
       spaceTexture.wrapT = THREE.RepeatWrapping;
 
-      // Morph: starts at 200px scroll, complete at 450px (short, snappy window)
-      morphProgress = Math.max(0, Math.min(1, (scrollY - 200) / 250));
+      // Morph: starts at 200px scroll, complete at 900px (long immersive window)
+      morphProgress = Math.max(0, Math.min(1, (scrollY - 200) / 700));
     };
 
     document.addEventListener("scroll", moveCamera, { passive: true });
@@ -330,12 +330,12 @@ export default function ThreeBg() {
       });
 
       // All three objects share one rotation so they stay perfectly in sync
-      sharedRotation += 0.003;
+      sharedRotation += 0.0015;
 
       // Bitman wireframe: fade out by morphProgress=0.2
       if (model) {
         model.rotation.y = sharedRotation;
-        const fade = Math.max(0, 1 - morphProgress * 5);
+        const fade = Math.max(0, 1 - morphProgress * 3);
         lineMat.opacity = 0.9 * fade;
         model.visible = fade > 0;
       }
@@ -344,7 +344,7 @@ export default function ThreeBg() {
       if (stairsModel) {
         stairsModel.rotation.y = sharedRotation;
         if (stairsMat) {
-          stairsMat.opacity = 0.9 * Math.max(0, (morphProgress - 0.7) / 0.3);
+          stairsMat.opacity = 0.9 * Math.max(0, (morphProgress - 0.55) / 0.45);
         }
       }
 
@@ -374,8 +374,8 @@ export default function ThreeBg() {
           posAttr.needsUpdate = true;
 
           // Appear fast, then fade out as stairs wireframe takes over (from 70%→100%)
-          const fadeIn  = Math.min(1, morphProgress * 6);
-          const fadeOut = Math.max(0, 1 - Math.max(0, (morphProgress - 0.7) / 0.3));
+          const fadeIn  = Math.min(1, morphProgress * 3);
+          const fadeOut = Math.max(0, 1 - Math.max(0, (morphProgress - 0.55) / 0.45));
           particleMat.opacity = fadeIn * fadeOut * 0.9;
         } else {
           particleMat.opacity = 0;

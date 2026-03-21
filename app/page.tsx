@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import ThreeBg from "@/components/ThreeBg";
 import NavBar from "@/components/NavBar";
 import HeroCtaPanel from "@/components/HeroCtaPanel";
@@ -9,6 +10,11 @@ const bebas = Bebas_Neue({
   subsets: ["latin"],
   weight: "400",
 });
+
+const BRANDS = [
+  "Nike", "Starbucks", "Red Bull", "Discord", "Twitch",
+  "Adidas", "Gymshark", "Spotify", "Puma", "ESPN",
+];
 
 
 
@@ -59,7 +65,7 @@ export default function Home() {
       </section>
 
       {/* Grey content area */}
-      <div className="relative bg-white text-black">
+      <div id="white-section" className="relative bg-white text-black">
 
         {/* How it works */}
         <section id="how" className="mx-auto max-w-6xl px-6 py-14">
@@ -93,32 +99,24 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Examples */}
-        <section id="phase1" className="mx-auto max-w-6xl px-6 py-14">
-          <h2 className="text-2xl font-semibold md:text-3xl text-black">Rhanks for everything</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <CardDark
-              title="Everyday life"
-              body={
-                <ul className="list-disc pl-5 text-black/60 space-y-2">
-                  <li>Tallest person in the class</li>
-                  <li>Most loyal customer in a shop</li>
-                  <li>Fastest runner on the street</li>
-                  <li>Best cook in the family</li>
-                </ul>
-              }
-            />
-            <CardDark
-              title="Communities & businesses"
-              body={
-                <ul className="list-disc pl-5 text-black/60 space-y-2">
-                  <li>Top contributor in a Discord</li>
-                  <li>Most active member of a gym</li>
-                  <li>Best-reviewed seller in a market</li>
-                  <li>Most creative in a design team</li>
-                </ul>
-              }
-            />
+        {/* Brand carousel */}
+        <section id="phase1" className="py-14 border-t border-black/8">
+          <p className="text-center text-[10px] tracking-[0.22em] uppercase text-black/30 mb-8">
+            Brands we want to Rhank with
+          </p>
+          <div className="relative overflow-hidden">
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10" />
+            <div className="flex animate-marquee whitespace-nowrap">
+              {[...BRANDS, ...BRANDS].map((brand, i) => (
+                <span
+                  key={i}
+                  className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/25 shrink-0"
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -139,30 +137,7 @@ export default function Home() {
           </div>
 
           <div className="border border-white/15 bg-black/30 backdrop-blur p-6">
-            <form className="space-y-4">
-              <div>
-                <label className="text-sm text-white/60">Name</label>
-                <input
-                  type="text"
-                  className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
-                  placeholder="Your name"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-white/60">Email</label>
-                <input
-                  type="email"
-                  className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full rounded-none bg-white px-5 py-3 font-semibold text-black hover:bg-white/90"
-              >
-                Notify me at launch
-              </button>
-            </form>
+            <NotifyForm />
           </div>
         </div>
       </section>
@@ -196,6 +171,82 @@ export default function Home() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function NotifyForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+    setMessage("");
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus("success");
+        setName("");
+        setEmail("");
+      } else {
+        setStatus("error");
+        setMessage(data.error ?? "Something went wrong.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="py-6 text-center">
+        <p className="text-white font-semibold">You&apos;re on the list.</p>
+        <p className="mt-2 text-sm text-white/50">We&apos;ll reach out the moment Rhank launches.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div>
+        <label className="text-sm text-white/60">Name</label>
+        <input
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
+          placeholder="Your name"
+        />
+      </div>
+      <div>
+        <label className="text-sm text-white/60">Email</label>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
+          placeholder="you@example.com"
+        />
+      </div>
+      {message && <p className="text-sm text-red-400">{message}</p>}
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="w-full rounded-none bg-white px-5 py-3 font-semibold text-black hover:bg-white/90 disabled:opacity-50"
+      >
+        {status === "loading" ? "Submitting…" : "Notify me at launch"}
+      </button>
+    </form>
   );
 }
 
