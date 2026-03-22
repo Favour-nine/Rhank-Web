@@ -23,7 +23,7 @@ export default function ParticlesBg() {
           particles: {
             number: {
               value: 140,
-              density: { enable: true, area: 900 },
+              density: { enable: true, value: 900 },
             },
             color: { value: "#ffffff" },
             opacity: { value: 0.3 },
