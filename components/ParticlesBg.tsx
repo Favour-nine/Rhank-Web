@@ -1,20 +1,24 @@
 "use client";
 
-import { useCallback } from "react";
-import Particles from "@tsparticles/react";
-import type { Engine } from "@tsparticles/engine";
+import { useEffect, useState } from "react";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadFull } from "tsparticles";
 
 export default function ParticlesBg() {
-  const particlesInit = useCallback(async (engine: Engine) => {
-    await loadFull(engine);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadFull(engine);
+    }).then(() => setReady(true));
   }, []);
+
+  if (!ready) return null;
 
   return (
     <div className="absolute inset-0 -z-10">
       <Particles
         id="tsparticles"
-        init={particlesInit}
         className="h-full w-full"
         options={{
           fullScreen: { enable: false },
@@ -23,7 +27,7 @@ export default function ParticlesBg() {
           particles: {
             number: {
               value: 140,
-              density: { enable: true, value: 900 },
+              density: { enable: true, width: 900, height: 900 },
             },
             color: { value: "#ffffff" },
             opacity: { value: 0.3 },
