@@ -5,6 +5,7 @@ import ThreeBg from "@/components/ThreeBg";
 import NavBar from "@/components/NavBar";
 import HeroCtaPanel from "@/components/HeroCtaPanel";
 import { Bebas_Neue } from "next/font/google";
+// bebas is used by StepCard and other sub-components via closure
 
 const bebas = Bebas_Neue({
   subsets: ["latin"],
@@ -16,8 +17,6 @@ const BRANDS = [
   "Adidas", "Gymshark", "Spotify", "Puma", "ESPN",
 ];
 
-
-
 export default function Home() {
   return (
     <main className="relative min-h-screen text-white">
@@ -25,76 +24,59 @@ export default function Home() {
       <NavBar />
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-20 pb-14 md:pt-28">
+      <section className="mx-auto max-w-6xl px-6 pt-20 pb-14 md:pt-32">
         <div className="max-w-2xl">
-          <h1 className={`${bebas.className} text-7xl md:text-9xl tracking-[0.05em] leading-[0.9]`}>
-            Rhank anything.
-            <br />
-            Earn your place.
+          <p className="mb-4 text-[11px] font-semibold tracking-[0.28em] uppercase text-white/60">
+            Coming soon
+          </p>
+          <h1 className={`${bebas.className} text-8xl md:text-[10rem] tracking-[0.03em] leading-[0.88]`}>
+            Rhank<br />anything.<br />Earn<br />your place.
           </h1>
 
-          <p className="mt-6 text-pretty text-base leading-relaxed text-white/70 md:text-lg">
-            Rhank is a platform where anyone can create a public leaderboard — called a Rhank             for literally any comparison. The tallest person in a class, the most loyal customer
-            at a coffee shop, the fastest sprinter on a team. You set the subject, people enter,
-            and the board ranks them live. Reach #1 and you earn Rhank tokens. No institution needed.
-            Any person, any group, any category.
+          <p className="mt-8 max-w-lg text-base leading-relaxed text-white/75 md:text-lg">
+            Create a public leaderboard for literally anything. The tallest, the fastest,
+            the most loyal. Set the rules, people enter, the board ranks them live.
+            Reach #1 and earn Rhank tokens.
           </p>
 
-          {/* CTA row */}
           <div className="mt-10">
             <HeroCtaPanel />
-          </div>
-
-          <div className="mt-12 flex justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full">
-              <FeatureCard
-                title="Create a Rhank"
-                desc="Set a category, invite people. Any subject, any group, any scale."
-              />
-              <FeatureCard
-                title="Enter & compete"
-                desc="Join any Rhank and get ranked. The board is public and live."
-              />
-              <FeatureCard
-                title="Earn tokens"
-                desc="Max out a Rhank and earn Rhank tokens. Top the board, own the rank."
-              />
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Grey content area */}
+      {/* Feature strip */}
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="grid grid-cols-1 gap-px md:grid-cols-3 border border-white/20 bg-white/20">
+          <FeatureCard title="Create a Rhank" desc="Any subject, any group, any scale. Set the rules and open it up." />
+          <FeatureCard title="Enter & compete" desc="Join any Rhank and get placed on the live leaderboard instantly." />
+          <FeatureCard title="Earn tokens" desc="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
+        </div>
+      </section>
+
+      {/* White section — How it works + Why + Carousel */}
       <div id="white-section" className="relative bg-white text-black">
 
         {/* How it works */}
-        <section id="how" className="mx-auto max-w-6xl px-6 py-14">
-          <h2 className="text-2xl font-semibold md:text-3xl text-black">How it works</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            <CardDark
-              title="1) Create a Rhank"
-              body="Pick a subject — tallest, strongest, best dressed, most loyal customer. Set the rules and open it up."
-            />
-            <CardDark
-              title="2) Enter & get ranked"
-              body="Anyone can join a Rhank. Submit your entry, get placed on the leaderboard, and see where you stand."
-            />
-            <CardDark
-              title="3) Top the board"
-              body="Reach #1 in a Rhank and earn Rhank tokens. The harder the Rhank, the more it’s worth."
-            />
+        <section id="how" className="mx-auto max-w-6xl px-6 py-20">
+          <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">How it works</p>
+          <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Three steps. Any subject.</h2>
+          <div className="mt-10 grid gap-0 md:grid-cols-3 border border-black/10">
+            <StepCard num="01" title="Create a Rhank" body="Pick a subject — tallest, strongest, best dressed, most loyal. Set the rules and open it up." />
+            <StepCard num="02" title="Enter & get ranked" body="Anyone can join. Submit your entry, get placed on the leaderboard, and see where you stand." />
+            <StepCard num="03" title="Top the board" body="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
           </div>
         </section>
 
-        {/* Why */}
-        <section id="why" className="mx-auto max-w-6xl px-6 py-14">
-          <div className="border border-black/10 p-8">
-            <h2 className="text-2xl font-semibold md:text-3xl text-black">Why Rhank</h2>
-            <p className="mt-4 text-black/60 leading-relaxed">
-              Leaderboards exist everywhere — sports, games, business — but they’re always built
-              for institutions. Rhank puts that power in anyone’s hands. A teacher can rank students
-              by participation. A coffee shop can rank loyal customers. A friend group can rank
-              literally anything. If there’s a comparison to be made, there’s a Rhank for it.
+        {/* Why Rhank */}
+        <section id="why" className="bg-[#1a5fff] py-20">
+          <div className="mx-auto max-w-6xl px-6">
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/60 mb-3">Why Rhank</p>
+            <h2 className={`${bebas.className} text-6xl md:text-7xl text-white`}>Leaderboards for everyone.</h2>
+            <p className="mt-6 max-w-2xl text-white/75 leading-relaxed text-lg">
+              Leaderboards exist everywhere — sports, games, business — but they're always built
+              for institutions. Rhank puts that power in anyone's hands. A teacher, a coffee shop,
+              a friend group. If there's a comparison to be made, there's a Rhank for it.
             </p>
           </div>
         </section>
@@ -109,10 +91,7 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10" />
             <div className="flex animate-marquee whitespace-nowrap">
               {[...BRANDS, ...BRANDS].map((brand, i) => (
-                <span
-                  key={i}
-                  className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/25 shrink-0"
-                >
+                <span key={i} className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/25 shrink-0">
                   {brand}
                 </span>
               ))}
@@ -123,49 +102,38 @@ export default function Home() {
       </div>
 
       {/* Notify */}
-      <section id="register" className="mx-auto max-w-6xl px-6 py-14 text-white">
-        <div className="grid gap-10 md:grid-cols-2 md:items-start">
+      <section id="register" className="mx-auto max-w-6xl px-6 py-20 text-white">
+        <div className="grid gap-12 md:grid-cols-2 md:items-start">
           <div>
-            <h2 className="text-2xl font-semibold md:text-3xl">Get notified at launch</h2>
-            <p className="mt-4 text-white/60 leading-relaxed">
-              Rhank is in development. Drop your email and we’ll let you know
-              the moment you can create your first Rhank.
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/60 mb-3">Early access</p>
+            <h2 className={`${bebas.className} text-6xl md:text-7xl`}>Be first in line.</h2>
+            <p className="mt-6 text-white/70 leading-relaxed text-lg">
+              Drop your name and email. We'll reach out the moment you can create your first Rhank.
             </p>
-            <p className="mt-3 text-xs text-white/40">
-              No spam. One email when we launch.
-            </p>
+            <p className="mt-3 text-xs text-white/40">No spam. One email when we launch.</p>
           </div>
 
-          <div className="border border-white/15 bg-black/30 backdrop-blur p-6">
+          <div className="border border-white/25 bg-white/10 backdrop-blur p-8">
             <NotifyForm />
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="mx-auto max-w-6xl px-6 py-14 pb-24 text-white">
-        <h2 className="text-2xl font-semibold md:text-3xl">FAQ</h2>
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <FaqDark
-            q="What can you Rhank?"
-            a="Literally anything. If there’s a way to compare people, you can build a Rhank for it."
-          />
-          <FaqDark
-            q="How do Rhank tokens work?"
-            a="When you reach #1 on a leaderboard, you earn Rhank tokens. The more competitive the Rhank, the greater the reward."
-          />
-          <FaqDark
-            q="Who can create a Rhank?"
-            a="Anyone. Teachers, shop owners, friends, communities if you have a comparison in mind, you can create a Rhank."
-          />
-          <FaqDark
-            q="When does Rhank launch?"
-            a="We’re building now. Leave your email above and you’ll be the first to know."
-          />
+      <section id="faq" className="bg-white text-black">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">FAQ</p>
+          <h2 className={`${bebas.className} text-6xl md:text-7xl text-black mb-10`}>Questions.</h2>
+          <div className="grid gap-px md:grid-cols-2 border border-black/10 bg-black/10">
+            <FaqCard q="What can you Rhank?" a="Literally anything. If there's a way to compare people, you can build a Rhank for it." />
+            <FaqCard q="How do Rhank tokens work?" a="When you reach #1 on a leaderboard, you earn Rhank tokens. The more competitive the Rhank, the greater the reward." />
+            <FaqCard q="Who can create a Rhank?" a="Anyone. Teachers, shop owners, friends, communities — if you have a comparison in mind, you can create a Rhank." />
+            <FaqCard q="When does Rhank launch?" a="We're building now. Leave your email above and you'll be the first to know." />
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/10">
+      <footer className="bg-[#1450d8] border-t border-white/10">
         <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-white/40">
           © {new Date().getFullYear()} Rhank. All rights reserved.
         </div>
@@ -208,41 +176,41 @@ function NotifyForm() {
   if (status === "success") {
     return (
       <div className="py-6 text-center">
-        <p className="text-white font-semibold">You&apos;re on the list.</p>
-        <p className="mt-2 text-sm text-white/50">We&apos;ll reach out the moment Rhank launches.</p>
+        <p className="text-white font-semibold text-lg">You&apos;re on the list.</p>
+        <p className="mt-2 text-sm text-white/60">We&apos;ll reach out the moment Rhank launches.</p>
       </div>
     );
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <div>
-        <label className="text-sm text-white/60">Name</label>
+        <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Name</label>
         <input
           type="text"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
+          className="mt-2 w-full border border-white/20 bg-white/10 px-4 py-3 outline-none focus:border-white/50 text-white placeholder:text-white/30 rounded-none"
           placeholder="Your name"
         />
       </div>
       <div>
-        <label className="text-sm text-white/60">Email</label>
+        <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Email</label>
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-2 w-full rounded-none border border-white/15 bg-black/40 px-4 py-3 outline-none focus:border-white/30 text-white"
+          className="mt-2 w-full border border-white/20 bg-white/10 px-4 py-3 outline-none focus:border-white/50 text-white placeholder:text-white/30 rounded-none"
           placeholder="you@example.com"
         />
       </div>
-      {message && <p className="text-sm text-red-400">{message}</p>}
+      {message && <p className="text-sm text-yellow-300">{message}</p>}
       <button
         type="submit"
         disabled={status === "loading"}
-        className="w-full rounded-none bg-white px-5 py-3 font-semibold text-black hover:bg-white/90 disabled:opacity-50"
+        className="w-full bg-white px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 disabled:opacity-50 transition-colors"
       >
         {status === "loading" ? "Submitting…" : "Notify me at launch"}
       </button>
@@ -250,44 +218,30 @@ function NotifyForm() {
   );
 }
 
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
-    <div
-      className={cn(
-        "group relative aspect-square border border-white/10 bg-black/30 backdrop-blur p-7 transition",
-        "hover:border-white/20"
-      )}
-    >
-      <div className="text-sm font-semibold tracking-[0.14em] uppercase text-white/90">
-        {title}
-      </div>
-
-      <div className="mt-3 text-sm leading-relaxed text-white/65">{desc}</div>
-
-      <div className="pointer-events-none absolute bottom-0 left-0 h-px w-0 bg-white/30 transition-all duration-300 group-hover:w-full" />
+    <div className="bg-[#1450d8]/60 backdrop-blur p-8">
+      <div className="text-xs font-bold tracking-[0.18em] uppercase text-white/90 mb-3">{title}</div>
+      <div className="text-sm leading-relaxed text-white/60">{desc}</div>
     </div>
   );
 }
 
-
-function CardDark({ title, body }: { title: string; body: React.ReactNode }) {
+function StepCard({ num, title, body }: { num: string; title: string; body: string }) {
   return (
-    <div className="border border-black/10 p-6">
-      <div className="text-lg font-semibold text-black">{title}</div>
-      <div className="mt-3 text-sm leading-relaxed text-black/60">{body}</div>
+    <div className="p-8 border-r border-black/10 last:border-r-0">
+      <div className={`${bebas.className} text-5xl text-black/10 mb-4`}>{num}</div>
+      <div className="text-base font-semibold text-black mb-2">{title}</div>
+      <div className="text-sm leading-relaxed text-black/55">{body}</div>
     </div>
   );
 }
 
-function FaqDark({ q, a }: { q: string; a: string }) {
+function FaqCard({ q, a }: { q: string; a: string }) {
   return (
-    <div className="border border-white/15 bg-black/20 backdrop-blur p-6">
-      <div className="font-semibold">{q}</div>
-      <div className="mt-2 text-sm text-white/60 leading-relaxed">{a}</div>
+    <div className="bg-white p-8">
+      <div className="font-semibold text-black mb-2">{q}</div>
+      <div className="text-sm text-black/55 leading-relaxed">{a}</div>
     </div>
   );
 }

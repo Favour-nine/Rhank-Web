@@ -130,7 +130,7 @@ export default function NavBar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${onWhite ? "bg-white/80" : "bg-black/30"}`}>
+      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${onWhite ? "bg-white/90" : "bg-[#1a5fff]/70"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           {/* Brand */}
           <a href="#" className="flex items-center">

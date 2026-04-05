@@ -47,11 +47,8 @@ export default function ThreeBg() {
       1.1   // threshold above 1.0 = only emissive stars bloom
     );
 
-    // --- Background (space image)
-    const textureLoader = new THREE.TextureLoader();
-    const spaceTexture = textureLoader.load("/space.jpg");
-    spaceTexture.colorSpace = THREE.SRGBColorSpace;
-    scene.background = spaceTexture;
+    // --- Background (solid blue)
+    scene.background = new THREE.Color(0x1a5fff);
 
     composer.addPass(bloomPass);
 
@@ -267,12 +264,6 @@ export default function ThreeBg() {
       camera.position.z = t * -0.01 + 30;
       camera.position.x = t * -0.0002 - 3;
       camera.rotation.y = t * -0.0002;
-
-      if (scene.background instanceof THREE.Texture) {
-        scene.background.offset.y = t * -0.00005;
-      }
-      spaceTexture.wrapS = THREE.RepeatWrapping;
-      spaceTexture.wrapT = THREE.RepeatWrapping;
 
       // Morph: starts at 200px scroll, complete at 900px (long immersive window)
       morphProgress = Math.max(0, Math.min(1, (scrollY - 200) / 700));

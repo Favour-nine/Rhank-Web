@@ -90,15 +90,15 @@ export default function HeroCtaPanel() {
     // FULL WIDTH: fill the hero container
     <div ref={rootRef} className="mt-10 w-full">
       {/* Buttons sit on a hairline divider */}
-      <div className="flex items-stretch border-t border-white/15">
+      <div className="flex items-stretch">
         <button
           type="button"
           onClick={() => toggle("secure")}
           className={[
-            "flex-1 border-r border-white/15 px-6 py-4 text-center text-xs font-semibold tracking-[0.22em] uppercase transition-colors",
+            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-colors",
             open === "secure"
-              ? "bg-white text-black"
-              : "bg-white/90 text-black hover:bg-white",
+              ? "bg-white text-[#1a5fff]"
+              : "bg-white text-[#1a5fff] hover:bg-white/90",
           ].join(" ")}
         >
           Get notified
@@ -108,10 +108,10 @@ export default function HeroCtaPanel() {
           type="button"
           onClick={() => toggle("how")}
           className={[
-            "flex-1 px-6 py-4 text-center text-xs font-semibold tracking-[0.22em] uppercase transition-colors",
+            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-colors border-l border-white/30",
             open === "how"
-              ? "bg-white text-black"
-              : "bg-transparent text-white/85 hover:bg-white/10 hover:text-white",
+              ? "bg-white/20 text-white"
+              : "bg-white/10 text-white hover:bg-white/20",
           ].join(" ")}
         >
           How it works
