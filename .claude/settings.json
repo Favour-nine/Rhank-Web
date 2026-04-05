@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(ls -lh \"c:\\\\Users\\\\jerom\\\\OneDrive\\\\Desktop\\\\Rhank\\\\rhank-web\\\\public\"/*.obj)",
+      "Bash(dir \"c:\\\\Users\\\\jerom\\\\OneDrive\\\\Desktop\\\\Rhank\\\\rhank-web\\\\public\")"
+    ]
+  }
+}

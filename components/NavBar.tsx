@@ -62,7 +62,7 @@ function MobileMenu({
 
         <div className="mx-auto h-full max-w-6xl px-6 pt-4 pb-10">
           <div className="mb-8 py-2">
-            <Image src="/r_white.svg" alt="Rhank" width={48} height={20} />
+            <Image src="/r_white.svg" alt="Rhank" width={32} height={14} />
           </div>
           <div className="border-t border-white/20 pt-10">
             <nav className="flex flex-col gap-7 text-sm font-medium tracking-[0.20em] uppercase text-white/90">
@@ -105,14 +105,25 @@ function MobileMenu({
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
-  const [onWhite, setOnWhite] = useState(false);
+  const [bg, setBg] = useState<"blue" | "white" | "yellow">("blue");
 
   useEffect(() => {
     const update = () => {
+      const NAVBAR_H = 64;
+      // Check yellow sections first (they're inside white-section)
+      for (const id of ["why", "phase1"]) {
+        const el = document.getElementById(id);
+        if (el) {
+          const { top, bottom } = el.getBoundingClientRect();
+          if (top <= NAVBAR_H && bottom > NAVBAR_H) { setBg("yellow"); return; }
+        }
+      }
       const ws = document.getElementById("white-section");
-      if (!ws) return;
-      const { top, bottom } = ws.getBoundingClientRect();
-      setOnWhite(top <= 64 && bottom > 64);
+      if (ws) {
+        const { top, bottom } = ws.getBoundingClientRect();
+        if (top <= NAVBAR_H && bottom > NAVBAR_H) { setBg("white"); return; }
+      }
+      setBg("blue");
     };
     window.addEventListener("scroll", update, { passive: true });
     update();
@@ -130,26 +141,26 @@ export default function NavBar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${onWhite ? "bg-white/90" : "bg-[#1a5fff]/70"}`}>
+      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${bg === "white" ? "bg-white/90" : bg === "yellow" ? "bg-[#ffe600]/90" : "bg-[#1a5fff]/70"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           {/* Brand */}
           <a href="#" className="flex items-center">
             <Image
-              src={onWhite ? "/r_black.svg" : "/r_white.svg"}
+              src={bg === "blue" ? "/r_white.svg" : "/r_black.svg"}
               alt="Rhank"
-              width={48}
-              height={20}
+              width={32}
+              height={14}
               priority
             />
           </a>
 
           {/* Desktop nav */}
-          <nav className={`hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase md:flex transition-colors duration-300 ${onWhite ? "text-black/50" : "text-white/60"}`}>
+          <nav className={`hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase md:flex transition-colors duration-300 ${bg === "blue" ? "text-white/60" : "text-black/50"}`}>
             {LINKS.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className={`transition-colors ${onWhite ? "hover:text-black" : "hover:text-white"}`}
+                className={`transition-colors ${bg === "blue" ? "hover:text-white" : "hover:text-black"}`}
               >
                 {l.label}
               </a>
@@ -159,18 +170,18 @@ export default function NavBar() {
           {/* Desktop CTA */}
           <a
             href="#register"
-            className={`hidden md:inline-flex border px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase transition-colors duration-200 ${onWhite ? "border-black/20 text-black hover:bg-black hover:text-white" : "border-white/20 text-white hover:bg-white hover:text-black"}`}
+            className={`hidden md:inline-flex border px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase transition-colors duration-200 ${bg === "blue" ? "border-white/20 text-white hover:bg-white hover:text-black" : "border-black/20 text-black hover:bg-black hover:text-white"}`}
           >
             Secure your Rhank
           </a>
 
-          {/* Mobile toggle (no border, hamburger morph) */}
+          {/* Mobile toggle */}
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className={`md:hidden inline-flex items-center justify-center p-2 transition-colors ${onWhite ? "text-black/70 hover:text-black" : "text-white/90 hover:text-white"}`}
+            className={`md:hidden inline-flex items-center justify-center p-2 transition-colors ${bg === "blue" ? "text-white/90 hover:text-white" : "text-black/70 hover:text-black"}`}
           >
             <span className="sr-only">Menu</span>
             <span className="relative block h-5 w-6">

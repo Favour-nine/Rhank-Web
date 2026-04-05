@@ -26,10 +26,7 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-14 md:pt-32">
         <div className="max-w-2xl">
-          <p className="mb-4 text-[11px] font-semibold tracking-[0.28em] uppercase text-white/60">
-            Coming soon
-          </p>
-          <h1 className={`${bebas.className} text-8xl md:text-[10rem] tracking-[0.03em] leading-[0.88]`}>
+          <h1 className={`${bebas.className} text-7xl md:text-[10rem] tracking-[0.03em] leading-[0.88]`}>
             Rhank<br />anything.<br />Earn<br />your place.
           </h1>
 
@@ -47,7 +44,7 @@ export default function Home() {
 
       {/* Feature strip */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="grid grid-cols-1 gap-px md:grid-cols-3 border border-white/20 bg-white/20">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/20 border border-white/20">
           <FeatureCard title="Create a Rhank" desc="Any subject, any group, any scale. Set the rules and open it up." />
           <FeatureCard title="Enter & compete" desc="Join any Rhank and get placed on the live leaderboard instantly." />
           <FeatureCard title="Earn tokens" desc="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
@@ -62,19 +59,19 @@ export default function Home() {
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">How it works</p>
           <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Three steps. Any subject.</h2>
           <div className="mt-10 grid gap-0 md:grid-cols-3 border border-black/10">
-            <StepCard num="01" title="Create a Rhank" body="Pick a subject — tallest, strongest, best dressed, most loyal. Set the rules and open it up." />
+            <StepCard num="01" title="Create a Rhank" body="Pick a subject: tallest, strongest, best dressed, most loyal. Set the rules and open it up." />
             <StepCard num="02" title="Enter & get ranked" body="Anyone can join. Submit your entry, get placed on the leaderboard, and see where you stand." />
             <StepCard num="03" title="Top the board" body="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
           </div>
         </section>
 
         {/* Why Rhank */}
-        <section id="why" className="bg-[#1a5fff] py-20">
+        <section id="why" className="bg-[#ffe600] py-20">
           <div className="mx-auto max-w-6xl px-6">
-            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/60 mb-3">Why Rhank</p>
-            <h2 className={`${bebas.className} text-6xl md:text-7xl text-white`}>Leaderboards for everyone.</h2>
-            <p className="mt-6 max-w-2xl text-white/75 leading-relaxed text-lg">
-              Leaderboards exist everywhere — sports, games, business — but they're always built
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/50 mb-3">Why Rhank</p>
+            <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Leaderboards for everyone.</h2>
+            <p className="mt-6 max-w-2xl text-black/70 leading-relaxed text-lg">
+              Leaderboards exist everywhere: sports, games, business. But they're always built
               for institutions. Rhank puts that power in anyone's hands. A teacher, a coffee shop,
               a friend group. If there's a comparison to be made, there's a Rhank for it.
             </p>
@@ -82,16 +79,18 @@ export default function Home() {
         </section>
 
         {/* Brand carousel */}
-        <section id="phase1" className="py-14 border-t border-black/8">
-          <p className="text-center text-[10px] tracking-[0.22em] uppercase text-black/30 mb-8">
+        {/* Brand carousel */}
+        {/* Brand carousel */}
+        <section id="phase1" className="bg-[#ffe600] py-14">
+          <p className="text-center text-[10px] tracking-[0.22em] uppercase text-black/40 mb-8">
             Brands we want to Rhank with
           </p>
           <div className="relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#ffe600] to-transparent z-10" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#ffe600] to-transparent z-10" />
             <div className="flex animate-marquee whitespace-nowrap">
               {[...BRANDS, ...BRANDS].map((brand, i) => (
-                <span key={i} className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/25 shrink-0">
+                <span key={i} className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/40 shrink-0">
                   {brand}
                 </span>
               ))}
@@ -127,7 +126,7 @@ export default function Home() {
           <div className="grid gap-px md:grid-cols-2 border border-black/10 bg-black/10">
             <FaqCard q="What can you Rhank?" a="Literally anything. If there's a way to compare people, you can build a Rhank for it." />
             <FaqCard q="How do Rhank tokens work?" a="When you reach #1 on a leaderboard, you earn Rhank tokens. The more competitive the Rhank, the greater the reward." />
-            <FaqCard q="Who can create a Rhank?" a="Anyone. Teachers, shop owners, friends, communities — if you have a comparison in mind, you can create a Rhank." />
+            <FaqCard q="Who can create a Rhank?" a="Anyone. Teachers, shop owners, friends, communities. If you have a comparison in mind, you can create a Rhank." />
             <FaqCard q="When does Rhank launch?" a="We're building now. Leave your email above and you'll be the first to know." />
           </div>
         </div>
