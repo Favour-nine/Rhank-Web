@@ -31,7 +31,7 @@ export default function ThreeBg() {
     camera.position.setX(-3);
 
     const isMobile = window.innerWidth < 768;
-    const STAIRS_SIZE = isMobile ? 26 : 38;
+    const STAIRS_SIZE = isMobile ? 36 : 38;
     const MODEL_CENTER_X = isMobile ? 0 : 7;
 
     let rotation = 0;

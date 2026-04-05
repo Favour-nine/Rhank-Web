@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { Bebas_Neue } from "next/font/google";
+
+const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
 const LINKS = [
   { href: "#how", label: "How it works" },
@@ -35,9 +38,9 @@ function MobileMenu({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999]">
-      {/* dark overlay */}
+      {/* overlay */}
       <div
-        className="absolute inset-0 bg-black/85 backdrop-blur-xl"
+        className="absolute inset-0 bg-[#1a5fff]/90 backdrop-blur-md"
         onClick={close}
       />
 
@@ -51,7 +54,7 @@ function MobileMenu({
           type="button"
           aria-label="Close menu"
           onClick={close}
-          className="fixed right-6 top-4 z-[10000] p-2 text-white/90 hover:text-white transition-colors"
+          className="absolute right-6 top-4 p-2 text-white/90 hover:text-white transition-colors"
         >
           <span className="sr-only">Close</span>
           <span className="relative block h-5 w-6">
@@ -65,7 +68,7 @@ function MobileMenu({
             <Image src="/r_white.svg" alt="Rhank" width={32} height={14} />
           </div>
           <div className="border-t border-white/20 pt-10">
-            <nav className="flex flex-col gap-7 text-sm font-medium tracking-[0.20em] uppercase text-white/90">
+            <nav className={`${bebas.className} flex flex-col gap-7 text-2xl tracking-[0.12em] uppercase text-white/90`}>
               {LINKS.map((l) => (
                 <a
                   key={l.href}

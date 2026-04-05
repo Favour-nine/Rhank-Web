@@ -13,8 +13,17 @@ const bebas = Bebas_Neue({
 });
 
 const BRANDS = [
-  "Nike", "Starbucks", "Red Bull", "Discord", "Twitch",
-  "Adidas", "Gymshark", "Spotify", "Puma", "ESPN",
+  { name: "Nike", file: "nike-6.svg" },
+  { name: "Starbucks", file: "starbucks-logo-ab-2011.svg" },
+  { name: "Red Bull", file: "redbullenergydrink-1.svg" },
+  { name: "Discord", file: "discord-wordmark-1.svg" },
+  { name: "Twitch", file: "twitch-blacklogo.svg" },
+  { name: "Adidas", file: "adidas2.svg" },
+  { name: "Spotify", file: "spotify-logo.svg" },
+  { name: "Puma", file: "puma-logo.svg" },
+  { name: "ESPN", file: "espn.svg" },
+  { name: "Hublot", file: "hublot-logo-1.svg" },
+  { name: "Nintendo", file: "nintendo-4.svg" },
 ];
 
 export default function Home() {
@@ -79,23 +88,11 @@ export default function Home() {
         </section>
 
         {/* Brand carousel */}
-        {/* Brand carousel */}
-        {/* Brand carousel */}
         <section id="phase1" className="bg-[#ffe600] py-14">
           <p className="text-center text-[10px] tracking-[0.22em] uppercase text-black/40 mb-8">
             Brands we want to Rhank with
           </p>
-          <div className="relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#ffe600] to-transparent z-10" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#ffe600] to-transparent z-10" />
-            <div className="flex animate-marquee whitespace-nowrap">
-              {[...BRANDS, ...BRANDS].map((brand, i) => (
-                <span key={i} className="mx-12 text-sm font-semibold tracking-[0.18em] uppercase text-black/40 shrink-0">
-                  {brand}
-                </span>
-              ))}
-            </div>
-          </div>
+          <DraggableCarousel />
         </section>
 
       </div>
@@ -241,6 +238,93 @@ function FaqCard({ q, a }: { q: string; a: string }) {
     <div className="bg-white p-8">
       <div className="font-semibold text-black mb-2">{q}</div>
       <div className="text-sm text-black/55 leading-relaxed">{a}</div>
+    </div>
+  );
+}
+
+function DraggableCarousel() {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const animRef = React.useRef<number>(0);
+  const isDragging = React.useRef(false);
+  const startX = React.useRef(0);
+  const scrollLeft = React.useRef(0);
+  const speed = React.useRef(0.5);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Auto-scroll
+    const tick = () => {
+      if (!isDragging.current) {
+        el.scrollLeft += speed.current;
+        // Seamless loop: when we've scrolled half, reset to start
+        if (el.scrollLeft >= el.scrollWidth / 2) el.scrollLeft = 0;
+      }
+      animRef.current = requestAnimationFrame(tick);
+    };
+    animRef.current = requestAnimationFrame(tick);
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging.current = true;
+      startX.current = e.pageX - el.offsetLeft;
+      scrollLeft.current = el.scrollLeft;
+      el.style.cursor = "grabbing";
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const x = e.pageX - el.offsetLeft;
+      el.scrollLeft = scrollLeft.current - (x - startX.current);
+    };
+    const onMouseUp = () => { isDragging.current = false; el.style.cursor = "grab"; };
+
+    const onTouchStart = (e: TouchEvent) => {
+      isDragging.current = true;
+      startX.current = e.touches[0].pageX - el.offsetLeft;
+      scrollLeft.current = el.scrollLeft;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current) return;
+      const x = e.touches[0].pageX - el.offsetLeft;
+      el.scrollLeft = scrollLeft.current - (x - startX.current);
+    };
+    const onTouchEnd = () => { isDragging.current = false; };
+
+    el.addEventListener("mousedown", onMouseDown);
+    el.addEventListener("mousemove", onMouseMove);
+    el.addEventListener("mouseup", onMouseUp);
+    el.addEventListener("mouseleave", onMouseUp);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      el.removeEventListener("mousedown", onMouseDown);
+      el.removeEventListener("mousemove", onMouseMove);
+      el.removeEventListener("mouseup", onMouseUp);
+      el.removeEventListener("mouseleave", onMouseUp);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#ffe600] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#ffe600] to-transparent z-10" />
+      <div
+        ref={ref}
+        className="flex whitespace-nowrap overflow-x-scroll select-none"
+        style={{ scrollbarWidth: "none", cursor: "grab" }}
+      >
+        {[...BRANDS, ...BRANDS].map((brand, i) => (
+          <div key={i} className="mx-10 shrink-0 flex items-center justify-center w-24 h-10">
+            <img src={`/logos/${brand.file}`} alt={brand.name} className="max-h-full max-w-full w-auto h-auto opacity-50 object-contain" draggable={false} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
