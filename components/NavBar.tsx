@@ -38,18 +38,18 @@ function MobileMenu({ open, close }: { open: boolean; close: () => void }) {
             <span className="absolute left-0 top-[9px] h-[1px] w-6 bg-current -rotate-45" />
           </span>
         </button>
-        <div className="mx-auto h-full max-w-6xl px-6 pt-4 pb-10">
-          <div className="mb-8 py-2">
-            <Image src="/Rhank_White.svg" alt="Rhank" width={32} height={14} />
+        <div className="mx-auto h-full max-w-6xl px-6 pt-4 pb-8">
+          <div className="mb-6 py-2">
+            <Image src="/Rhank_White.svg" alt="Rhank" width={24} height={10} />
           </div>
-          <div className="border-t border-white/20 pt-10">
-            <nav className={`${bebas.className} flex flex-col gap-7 text-2xl tracking-[0.12em] uppercase text-white/90`}>
+          <div className="border-t border-white/20 pt-7">
+            <nav className={`${bebas.className} flex flex-col gap-5 text-lg tracking-[0.12em] uppercase text-white/90`}>
               {LINKS.map((l) => (
                 <a key={l.href} href={l.href} onClick={close} className="hover:text-white transition-colors">{l.label}</a>
               ))}
             </nav>
-            <div className="mt-10 border-t border-white/20 pt-8">
-              <a href="#register" onClick={close} className="inline-flex w-full items-center justify-center border border-white/30 px-5 py-4 text-[11px] font-semibold tracking-[0.26em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200">
+            <div className="mt-8 border-t border-white/20 pt-6">
+              <a href="#register" onClick={close} className="inline-flex w-full items-center justify-center border border-white/30 px-5 py-3 text-[10px] font-semibold tracking-[0.26em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200">
                 Secure your Rhank
               </a>
             </div>
