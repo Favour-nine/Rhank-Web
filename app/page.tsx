@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import ThreeBg from "@/components/ThreeBg";
 import NavBar from "@/components/NavBar";
 import HeroCtaPanel from "@/components/HeroCtaPanel";
+import FadeUp from "@/components/FadeUp";
 import { Bebas_Neue } from "next/font/google";
 // bebas is used by StepCard and other sub-components via closure
 
@@ -35,29 +36,37 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-14 md:pt-32">
         <div className="max-w-2xl">
-          <h1 className={`${bebas.className} text-7xl md:text-[10rem] tracking-[0.03em] leading-[0.88]`}>
-            Rhank<br />anything.<br />Earn<br />your place.
-          </h1>
+          <FadeUp>
+            <h1 className={`${bebas.className} text-7xl md:text-[10rem] tracking-[0.03em] leading-[0.88]`}>
+              Rhank<br />anything.<br />Earn<br />your place.
+            </h1>
+          </FadeUp>
 
-          <p className="mt-8 max-w-lg text-base leading-relaxed text-white/75 md:text-lg">
-            Create a public leaderboard for literally anything. The tallest, the fastest,
-            the most loyal. Set the rules, people enter, the board ranks them live.
-            Reach #1 and earn Rhank tokens.
-          </p>
+          <FadeUp delay={150}>
+            <p className="mt-8 max-w-lg text-base leading-relaxed text-white/75 md:text-lg">
+              Create a public leaderboard for literally anything. The tallest, the fastest,
+              the most loyal. Set the rules, people enter, the board ranks them live.
+              Reach #1 and earn Rhank tokens.
+            </p>
+          </FadeUp>
 
-          <div className="mt-10">
-            <HeroCtaPanel />
-          </div>
+          <FadeUp delay={300}>
+            <div className="mt-10">
+              <HeroCtaPanel />
+            </div>
+          </FadeUp>
         </div>
       </section>
 
       {/* Feature strip */}
       <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/20 border border-white/20">
-          <FeatureCard title="Create a Rhank" desc="Any subject, any group, any scale. Set the rules and open it up." />
-          <FeatureCard title="Enter & compete" desc="Join any Rhank and get placed on the live leaderboard instantly." />
-          <FeatureCard title="Earn tokens" desc="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
-        </div>
+        <FadeUp>
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/20 border border-white/20">
+            <FeatureCard title="Create a Rhank" desc="Any subject, any group, any scale. Set the rules and open it up." />
+            <FeatureCard title="Enter & compete" desc="Join any Rhank and get placed on the live leaderboard instantly." />
+            <FeatureCard title="Earn tokens" desc="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
+          </div>
+        </FadeUp>
       </section>
 
       {/* White section — How it works + Why + Carousel */}
@@ -65,25 +74,31 @@ export default function Home() {
 
         {/* How it works */}
         <section id="how" className="mx-auto max-w-6xl px-6 py-20">
-          <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">How it works</p>
-          <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Three steps. Any subject.</h2>
-          <div className="mt-10 grid gap-0 md:grid-cols-3 border border-black/10">
-            <StepCard num="01" title="Create a Rhank" body="Pick a subject: tallest, strongest, best dressed, most loyal. Set the rules and open it up." />
-            <StepCard num="02" title="Enter & get ranked" body="Anyone can join. Submit your entry, get placed on the leaderboard, and see where you stand." />
-            <StepCard num="03" title="Top the board" body="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
-          </div>
+          <FadeUp>
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">How it works</p>
+            <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Three steps. Any subject.</h2>
+          </FadeUp>
+          <FadeUp delay={150}>
+            <div className="mt-10 grid gap-0 md:grid-cols-3 border border-black/10">
+              <StepCard num="01" title="Create a Rhank" body="Pick a subject: tallest, strongest, best dressed, most loyal. Set the rules and open it up." />
+              <StepCard num="02" title="Enter & get ranked" body="Anyone can join. Submit your entry, get placed on the leaderboard, and see where you stand." />
+              <StepCard num="03" title="Top the board" body="Reach #1 and earn Rhank tokens. The harder the Rhank, the more it's worth." />
+            </div>
+          </FadeUp>
         </section>
 
         {/* Why Rhank */}
         <section id="why" className="bg-[#ffe600] py-20">
           <div className="mx-auto max-w-6xl px-6">
-            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/50 mb-3">Why Rhank</p>
-            <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Leaderboards for everyone.</h2>
-            <p className="mt-6 max-w-2xl text-black/70 leading-relaxed text-lg">
-              Leaderboards exist everywhere: sports, games, business. But they're always built
-              for institutions. Rhank puts that power in anyone's hands. A teacher, a coffee shop,
-              a friend group. If there's a comparison to be made, there's a Rhank for it.
-            </p>
+            <FadeUp>
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/50 mb-3">Why Rhank</p>
+              <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Leaderboards for everyone.</h2>
+              <p className="mt-6 max-w-2xl text-black/70 leading-relaxed text-lg">
+                Leaderboards exist everywhere: sports, games, business. But they're always built
+                for institutions. Rhank puts that power in anyone's hands. A teacher, a coffee shop,
+                a friend group. If there's a comparison to be made, there's a Rhank for it.
+              </p>
+            </FadeUp>
           </div>
         </section>
 
@@ -99,33 +114,38 @@ export default function Home() {
 
       {/* Notify */}
       <section id="register" className="mx-auto max-w-6xl px-6 py-20 text-white">
-        <div className="grid gap-12 md:grid-cols-2 md:items-start">
-          <div>
-            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/60 mb-3">Early access</p>
-            <h2 className={`${bebas.className} text-6xl md:text-7xl`}>Be first in line.</h2>
-            <p className="mt-6 text-white/70 leading-relaxed text-lg">
-              Drop your name and email. We'll reach out the moment you can create your first Rhank.
-            </p>
-            <p className="mt-3 text-xs text-white/40">No spam. One email when we launch.</p>
+        <FadeUp>
+          <div className="grid gap-12 md:grid-cols-2 md:items-start">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/60 mb-3">Early access</p>
+              <h2 className={`${bebas.className} text-6xl md:text-7xl`}>Be first in line.</h2>
+              <p className="mt-6 text-white/70 leading-relaxed text-lg">
+                Drop your name and email. We'll reach out the moment you can create your first Rhank.
+              </p>
+              <p className="mt-3 text-xs text-white/40">No spam. One email when we launch.</p>
+            </div>
+            <div className="border border-white/25 bg-white/10 backdrop-blur p-8">
+              <NotifyForm />
+            </div>
           </div>
-
-          <div className="border border-white/25 bg-white/10 backdrop-blur p-8">
-            <NotifyForm />
-          </div>
-        </div>
+        </FadeUp>
       </section>
 
       {/* FAQ */}
       <section id="faq" className="bg-white text-black">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">FAQ</p>
-          <h2 className={`${bebas.className} text-6xl md:text-7xl text-black mb-10`}>Questions.</h2>
-          <div className="grid gap-px md:grid-cols-2 border border-black/10 bg-black/10">
-            <FaqCard q="What can you Rhank?" a="Literally anything. If there's a way to compare people, you can build a Rhank for it." />
-            <FaqCard q="How do Rhank tokens work?" a="When you reach #1 on a leaderboard, you earn Rhank tokens. The more competitive the Rhank, the greater the reward." />
-            <FaqCard q="Who can create a Rhank?" a="Anyone. Teachers, shop owners, friends, communities. If you have a comparison in mind, you can create a Rhank." />
-            <FaqCard q="When does Rhank launch?" a="We're building now. Leave your email above and you'll be the first to know." />
-          </div>
+          <FadeUp>
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/40 mb-3">FAQ</p>
+            <h2 className={`${bebas.className} text-6xl md:text-7xl text-black mb-10`}>Questions.</h2>
+          </FadeUp>
+          <FadeUp delay={150}>
+            <div className="grid gap-px md:grid-cols-2 border border-black/10 bg-black/10">
+              <FaqCard q="What can you Rhank?" a="Literally anything. If there's a way to compare people, you can build a Rhank for it." />
+              <FaqCard q="How do Rhank tokens work?" a="When you reach #1 on a leaderboard, you earn Rhank tokens. The more competitive the Rhank, the greater the reward." />
+              <FaqCard q="Who can create a Rhank?" a="Anyone. Teachers, shop owners, friends, communities. If you have a comparison in mind, you can create a Rhank." />
+              <FaqCard q="When does Rhank launch?" a="We're building now. Leave your email above and you'll be the first to know." />
+            </div>
+          </FadeUp>
         </div>
       </section>
 

@@ -95,10 +95,10 @@ export default function HeroCtaPanel() {
           type="button"
           onClick={() => toggle("secure")}
           className={[
-            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-colors",
+            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-all border-b-2",
             open === "secure"
-              ? "bg-white text-[#1a5fff]"
-              : "bg-white text-[#1a5fff] hover:bg-white/90",
+              ? "bg-white text-[#1a5fff] border-[#1a5fff]"
+              : "bg-white text-[#1a5fff]/50 border-transparent hover:text-[#1a5fff] hover:bg-white/90",
           ].join(" ")}
         >
           Get notified
@@ -108,10 +108,10 @@ export default function HeroCtaPanel() {
           type="button"
           onClick={() => toggle("how")}
           className={[
-            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-colors border-l border-white/30",
+            "flex-1 px-6 py-4 text-center text-xs font-bold tracking-[0.22em] uppercase transition-all border-b-2",
             open === "how"
-              ? "bg-white/20 text-white"
-              : "bg-white/10 text-white hover:bg-white/20",
+              ? "bg-white text-[#1a5fff] border-[#1a5fff]"
+              : "bg-[#ffe600] text-black border-transparent hover:bg-[#ffe600]/90",
           ].join(" ")}
         >
           How it works

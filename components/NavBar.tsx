@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Bebas_Neue } from "next/font/google";
@@ -14,22 +14,13 @@ const LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-function MobileMenu({
-  open,
-  close,
-}: {
-  open: boolean;
-  close: () => void;
-}) {
-  // Prevent SSR/first render issues
+function MobileMenu({ open, close }: { open: boolean; close: () => void }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, close]);
@@ -38,63 +29,27 @@ function MobileMenu({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999]">
-      {/* overlay */}
-      <div
-        className="absolute inset-0 bg-[#1a5fff]/90 backdrop-blur-md"
-        onClick={close}
-      />
-
-      {/* content panel */}
-      <div
-        className="relative h-full w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Fixed X (no border) */}
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={close}
-          className="absolute right-6 top-4 p-2 text-white/90 hover:text-white transition-colors"
-        >
+      <div className="absolute inset-0 bg-[#1a5fff]/90 backdrop-blur-md" onClick={close} />
+      <div className="relative h-full w-full" onClick={(e) => e.stopPropagation()}>
+        <button type="button" aria-label="Close menu" onClick={close} className="absolute right-6 top-4 p-2 text-white/90 hover:text-white transition-colors">
           <span className="sr-only">Close</span>
           <span className="relative block h-5 w-6">
             <span className="absolute left-0 top-[9px] h-[1px] w-6 bg-current rotate-45" />
             <span className="absolute left-0 top-[9px] h-[1px] w-6 bg-current -rotate-45" />
           </span>
         </button>
-
         <div className="mx-auto h-full max-w-6xl px-6 pt-4 pb-10">
           <div className="mb-8 py-2">
-            <Image src="/r_white.svg" alt="Rhank" width={32} height={14} />
+            <Image src="/Rhank_White.svg" alt="Rhank" width={32} height={14} />
           </div>
           <div className="border-t border-white/20 pt-10">
             <nav className={`${bebas.className} flex flex-col gap-7 text-2xl tracking-[0.12em] uppercase text-white/90`}>
               {LINKS.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  onClick={close}
-                  className="hover:text-white transition-colors"
-                >
-                  {l.label}
-                </a>
+                <a key={l.href} href={l.href} onClick={close} className="hover:text-white transition-colors">{l.label}</a>
               ))}
             </nav>
-
             <div className="mt-10 border-t border-white/20 pt-8">
-              <a
-                href="#register"
-                onClick={close}
-                className="
-                  inline-flex w-full items-center justify-center
-                  border border-white/30
-                  px-5 py-4
-                  text-[11px] font-semibold tracking-[0.26em] uppercase
-                  text-white
-                  hover:bg-white hover:text-black
-                  transition-colors duration-200
-                "
-              >
+              <a href="#register" onClick={close} className="inline-flex w-full items-center justify-center border border-white/30 px-5 py-4 text-[11px] font-semibold tracking-[0.26em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200">
                 Secure your Rhank
               </a>
             </div>
@@ -106,28 +61,38 @@ function MobileMenu({
   );
 }
 
+type BgType = "blue" | "white" | "yellow";
+
 export default function NavBar() {
   const [open, setOpen] = useState(false);
-  const [bg, setBg] = useState<"blue" | "white" | "yellow">("blue");
+  const [bg, setBg] = useState<BgType>("blue");
+  const prevBg = useRef<BgType>("blue");
 
   useEffect(() => {
+    const H = 64;
+
     const update = () => {
-      const NAVBAR_H = 64;
-      // Check yellow sections first (they're inside white-section)
-      for (const id of ["why", "phase1"]) {
+      const ids: { id: string; color: BgType }[] = [
+        { id: "why",    color: "yellow" },
+        { id: "phase1", color: "yellow" },
+        { id: "faq",    color: "white"  },
+        { id: "how",    color: "white"  },
+        { id: "white-section", color: "white" },
+      ];
+
+      for (const { id, color } of ids) {
         const el = document.getElementById(id);
-        if (el) {
-          const { top, bottom } = el.getBoundingClientRect();
-          if (top <= NAVBAR_H && bottom > NAVBAR_H) { setBg("yellow"); return; }
+        if (!el) continue;
+        const { top, bottom } = el.getBoundingClientRect();
+        if (top <= H && bottom > H) {
+          if (prevBg.current !== color) { prevBg.current = color; setBg(color); }
+          return;
         }
       }
-      const ws = document.getElementById("white-section");
-      if (ws) {
-        const { top, bottom } = ws.getBoundingClientRect();
-        if (top <= NAVBAR_H && bottom > NAVBAR_H) { setBg("white"); return; }
-      }
-      setBg("blue");
+
+      if (prevBg.current !== "blue") { prevBg.current = "blue"; setBg("blue"); }
     };
+
     window.addEventListener("scroll", update, { passive: true });
     update();
     return () => window.removeEventListener("scroll", update);
@@ -135,46 +100,46 @@ export default function NavBar() {
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
   const close = () => setOpen(false);
 
+  const bgClass = bg === "white" ? "bg-white/95" : bg === "yellow" ? "bg-[#ffe600]" : "bg-[#1a5fff]/80";
+  const textClass = bg === "blue" ? "text-white/60" : "text-black/50";
+  const hoverClass = bg === "blue" ? "hover:text-white" : "hover:text-black";
+  const ctaClass = bg === "blue"
+    ? "border-white/20 text-white hover:bg-white hover:text-[#1a5fff]"
+    : "border-black/20 text-black hover:bg-black hover:text-white";
+  const hamClass = bg === "blue" ? "text-white/90" : "text-black/70";
+
   return (
     <>
-      <header className={`sticky top-0 z-20 backdrop-blur transition-colors duration-300 ${bg === "white" ? "bg-white/90" : bg === "yellow" ? "bg-[#ffe600]/90" : "bg-[#1a5fff]/70"}`}>
+      <header className={`sticky top-0 z-20 backdrop-blur-md ${bgClass}`} style={{ transition: "background-color 0.4s ease" }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           {/* Brand */}
-          <a href="#" className="flex items-center">
-            <Image
-              src={bg === "blue" ? "/r_white.svg" : "/r_black.svg"}
+          <a href="#" className="relative flex items-center" style={{ width: 80, height: 24 }}>
+            <img
+              src="/Rhank_White.svg"
               alt="Rhank"
-              width={32}
-              height={14}
-              priority
+              style={{ position: "absolute", height: 24, width: "auto", transition: "opacity 0.3s ease", opacity: bg === "blue" ? 1 : 0 }}
+            />
+            <img
+              src="/Rhank_Black.svg"
+              alt="Rhank"
+              style={{ position: "absolute", height: 24, width: "auto", transition: "opacity 0.3s ease", opacity: bg === "blue" ? 0 : 1 }}
             />
           </a>
 
           {/* Desktop nav */}
-          <nav className={`hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase md:flex transition-colors duration-300 ${bg === "blue" ? "text-white/60" : "text-black/50"}`}>
+          <nav className={`hidden items-center gap-8 text-[11px] font-medium tracking-[0.26em] uppercase md:flex ${textClass}`} style={{ transition: "color 0.3s ease" }}>
             {LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                className={`transition-colors ${bg === "blue" ? "hover:text-white" : "hover:text-black"}`}
-              >
-                {l.label}
-              </a>
+              <a key={l.href} href={l.href} className={`transition-colors ${hoverClass}`}>{l.label}</a>
             ))}
           </nav>
 
           {/* Desktop CTA */}
-          <a
-            href="#register"
-            className={`hidden md:inline-flex border px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase transition-colors duration-200 ${bg === "blue" ? "border-white/20 text-white hover:bg-white hover:text-black" : "border-black/20 text-black hover:bg-black hover:text-white"}`}
-          >
+          <a href="#register" className={`hidden md:inline-flex border px-5 py-3 text-[11px] font-semibold tracking-[0.26em] uppercase transition-colors duration-300 ${ctaClass}`}>
             Secure your Rhank
           </a>
 
@@ -184,34 +149,18 @@ export default function NavBar() {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className={`md:hidden inline-flex items-center justify-center p-2 transition-colors ${bg === "blue" ? "text-white/90 hover:text-white" : "text-black/70 hover:text-black"}`}
+            className={`md:hidden inline-flex items-center justify-center p-2 transition-colors ${hamClass}`}
           >
             <span className="sr-only">Menu</span>
             <span className="relative block h-5 w-6">
-              <span
-                className={[
-                  "absolute left-0 top-[2px] h-[1px] w-6 bg-current transition-transform duration-200",
-                  open ? "translate-y-[8px] rotate-45 opacity-0" : "",
-                ].join(" ")}
-              />
-              <span
-                className={[
-                  "absolute left-0 top-[9px] h-[1px] w-6 bg-current transition-opacity duration-200",
-                  open ? "opacity-0" : "opacity-100",
-                ].join(" ")}
-              />
-              <span
-                className={[
-                  "absolute left-0 top-[16px] h-[1px] w-6 bg-current transition-transform duration-200",
-                  open ? "-translate-y-[6px] -rotate-45 opacity-0" : "",
-                ].join(" ")}
-              />
+              <span className={["absolute left-0 top-[2px] h-[1px] w-6 bg-current transition-transform duration-200", open ? "translate-y-[8px] rotate-45 opacity-0" : ""].join(" ")} />
+              <span className={["absolute left-0 top-[9px] h-[1px] w-6 bg-current transition-opacity duration-200", open ? "opacity-0" : "opacity-100"].join(" ")} />
+              <span className={["absolute left-0 top-[16px] h-[1px] w-6 bg-current transition-transform duration-200", open ? "-translate-y-[6px] -rotate-45 opacity-0" : ""].join(" ")} />
             </span>
           </button>
         </div>
       </header>
 
-      {/* Full screen portal menu */}
       <MobileMenu open={open} close={close} />
     </>
   );
