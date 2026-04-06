@@ -7,7 +7,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-export default function ThreeBg() {
+export default function ThreeBg({ onReady }: { onReady?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -73,6 +73,7 @@ export default function ThreeBg() {
       const geos = objToWireframe(obj, lineMat, STAIRS_SIZE, MODEL_CENTER_X);
       edgeGeometries.push(...geos);
       scene.add(obj);
+      onReady?.();
     });
 
     // --- Lights

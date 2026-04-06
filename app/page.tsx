@@ -28,9 +28,32 @@ const BRANDS = [
 ];
 
 export default function Home() {
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <main className="relative min-h-screen text-white">
-      <ThreeBg />
+      {/* Loading screen */}
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#1a5fff]"
+        style={{
+          opacity: loaded ? 0 : 1,
+          pointerEvents: loaded ? "none" : "all",
+          transition: "opacity 0.8s ease",
+        }}
+      >
+        <img src="/Rhank_White.svg" alt="Rhank" style={{ height: 36, width: "auto" }} />
+        <div className="mt-8 flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="block h-1.5 w-1.5 rounded-full bg-white/60"
+              style={{ animation: `loadDot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <ThreeBg onReady={() => setLoaded(true)} />
       <NavBar />
 
       {/* Hero */}
@@ -274,40 +297,20 @@ function DraggableCarousel() {
     const el = ref.current;
     if (!el) return;
 
-    // Auto-scroll
     const tick = () => {
-      if (!isDragging.current) {
+      if (!isDragging.current && el.scrollWidth > el.clientWidth) {
         el.scrollLeft += speed.current;
-        // Seamless loop: when we've scrolled half, reset to start
         if (el.scrollLeft >= el.scrollWidth / 2) el.scrollLeft = 0;
       }
       animRef.current = requestAnimationFrame(tick);
     };
-    animRef.current = requestAnimationFrame(tick);
+    const timer = setTimeout(() => { animRef.current = requestAnimationFrame(tick); }, 200);
 
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging.current = true;
-      startX.current = e.pageX - el.offsetLeft;
-      scrollLeft.current = el.scrollLeft;
-      el.style.cursor = "grabbing";
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const x = e.pageX - el.offsetLeft;
-      el.scrollLeft = scrollLeft.current - (x - startX.current);
-    };
+    const onMouseDown = (e: MouseEvent) => { isDragging.current = true; startX.current = e.pageX - el.offsetLeft; scrollLeft.current = el.scrollLeft; el.style.cursor = "grabbing"; };
+    const onMouseMove = (e: MouseEvent) => { if (!isDragging.current) return; el.scrollLeft = scrollLeft.current - (e.pageX - el.offsetLeft - startX.current); };
     const onMouseUp = () => { isDragging.current = false; el.style.cursor = "grab"; };
-
-    const onTouchStart = (e: TouchEvent) => {
-      isDragging.current = true;
-      startX.current = e.touches[0].pageX - el.offsetLeft;
-      scrollLeft.current = el.scrollLeft;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current) return;
-      const x = e.touches[0].pageX - el.offsetLeft;
-      el.scrollLeft = scrollLeft.current - (x - startX.current);
-    };
+    const onTouchStart = (e: TouchEvent) => { isDragging.current = true; startX.current = e.touches[0].pageX - el.offsetLeft; scrollLeft.current = el.scrollLeft; };
+    const onTouchMove = (e: TouchEvent) => { if (!isDragging.current) return; el.scrollLeft = scrollLeft.current - (e.touches[0].pageX - el.offsetLeft - startX.current); };
     const onTouchEnd = () => { isDragging.current = false; };
 
     el.addEventListener("mousedown", onMouseDown);
@@ -319,6 +322,7 @@ function DraggableCarousel() {
     el.addEventListener("touchend", onTouchEnd);
 
     return () => {
+      clearTimeout(timer);
       cancelAnimationFrame(animRef.current);
       el.removeEventListener("mousedown", onMouseDown);
       el.removeEventListener("mousemove", onMouseMove);
