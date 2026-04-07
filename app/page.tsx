@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import ThreeBg from "@/components/ThreeBg";
+import MarketingBg from "@/components/MarketingBg";
 import NavBar from "@/components/NavBar";
 import HeroCtaPanel from "@/components/HeroCtaPanel";
 import FadeUp from "@/components/FadeUp";
@@ -53,7 +53,7 @@ export default function Home() {
         </div>
       </div>
 
-      <ThreeBg onReady={() => setLoaded(true)} />
+      <MarketingBg onReady={() => setLoaded(true)} />
       <NavBar />
 
       {/* Hero */}
