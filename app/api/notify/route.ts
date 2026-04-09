@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID!;
-
 export async function POST(req: NextRequest) {
+  if (!process.env.RESEND_API_KEY || !process.env.RESEND_AUDIENCE_ID) {
+    return NextResponse.json({ error: "Signups are not available yet." }, { status: 503 });
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;
+
   try {
     const { name, email } = await req.json();
 
