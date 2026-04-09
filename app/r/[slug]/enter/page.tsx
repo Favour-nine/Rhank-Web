@@ -62,18 +62,28 @@ export default function EnterRhankPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); setStatus("error"); return; }
-      router.push(`/r/${slug}?entered=1`);
+      router.push(`/r/${slug}`);
     } catch {
       setError("Network error. Please try again.");
       setStatus("error");
     }
   };
 
-  if (loading) return <Shell><p className="text-white/40 text-lg">Loading…</p></Shell>;
+  if (loading) return (
+    <Shell>
+      <div className="flex gap-1.5">
+        {[0,1,2].map((i) => (
+          <span key={i} className="block w-1.5 h-1.5 rounded-full bg-white/40"
+            style={{ animation: `loadDot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+        ))}
+      </div>
+    </Shell>
+  );
+
   if (notFound) return (
     <Shell>
-      <p className={`${bebas.className} text-5xl text-white/40`}>Rhank not found.</p>
-      <Link href="/rhanks/new" className="mt-6 inline-block border border-white/25 px-5 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
+      <p className={`${bebas.className} text-5xl text-white/30 mb-4`}>Rhank not found.</p>
+      <Link href="/rhanks/new" className="inline-flex items-center bg-white px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 transition-colors">
         Create one →
       </Link>
     </Shell>
@@ -84,61 +94,78 @@ export default function EnterRhankPage() {
       <ThreeBg />
       <AppNav />
 
-      <section className="mx-auto max-w-xl px-6 pt-20 pb-24 md:pt-32">
+      <section className="mx-auto max-w-lg px-6 pt-16 pb-24 md:pt-24">
+
+        {/* Back link */}
         <Link
           href={`/r/${slug}`}
-          className="inline-flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-white/40 hover:text-white/70 transition-colors mb-8"
+          className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.22em] uppercase text-white/35 hover:text-white/60 transition-colors mb-10"
         >
-          ← Back to leaderboard
+          ← {rhank!.title}
         </Link>
 
-        <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/50 mb-2">
-          {rhank!.title}
-        </p>
-        <h1 className={`${bebas.className} text-6xl md:text-7xl leading-none mb-6`}>
-          Submit<br />your entry.
+        {/* Header */}
+        <h1 className={`${bebas.className} text-6xl md:text-8xl leading-none mb-2`}>
+          Submit<br />entry.
         </h1>
+        <p className="text-white/40 text-sm mb-8">
+          {rhank!.direction === "high" ? "Higher" : "Lower"} {rhank!.unit} ranks higher on this board.
+        </p>
 
-        {/* Sign-in credit prompt — only show if not signed in */}
+        {/* Sign-in credit prompt */}
         {!user && (
-          <div className="mb-8 border border-white/15 bg-white/5 px-4 py-4 flex items-center justify-between gap-4">
+          <div className="mb-8 flex items-center justify-between gap-4 border-l-2 border-[#ffe600] pl-4 py-1">
             <div>
-              <p className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Earn credit for this entry</p>
-              <p className="text-[11px] text-white/35 mt-0.5">Sign in to link this submission to your account</p>
+              <p className="text-xs font-semibold tracking-[0.18em] uppercase text-white/70">Want credit?</p>
+              <p className="text-[11px] text-white/40 mt-0.5">Sign in to link this to your account</p>
             </div>
             <Link
               href={`/login?next=/r/${slug}/enter`}
-              className="shrink-0 border border-white/25 px-4 py-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-white hover:bg-white hover:text-[#1a5fff] transition-colors"
+              className="shrink-0 bg-[#ffe600] px-4 py-2 text-[11px] font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors"
             >
               Sign in
             </Link>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Signed-in badge */}
+        {user && (
+          <div className="mb-8 flex items-center gap-2 text-[11px] text-white/40 tracking-[0.15em] uppercase">
+            <span className="w-2 h-2 rounded-full bg-green-400" />
+            Submitting as <span className="text-white/70 font-semibold">{user.user_metadata?.name || user.email?.split("@")[0]}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
           <Field label="Your name" hint="How you'll appear on the leaderboard">
             <input
               required
               value={form.participant_name}
               onChange={(e) => set("participant_name", e.target.value)}
-              placeholder="Jerome"
+              placeholder="Your name"
               className={inputCls}
             />
           </Field>
 
-          <Field label={rhank!.unit} hint={`${rhank!.direction === "high" ? "Higher" : "Lower"} is better`}>
-            <input
-              required
-              type="number"
-              step="any"
-              value={form.value}
-              onChange={(e) => set("value", e.target.value)}
-              placeholder="0"
-              className={inputCls}
-            />
+          <Field label={`Your ${rhank!.unit}`} hint={`Enter your score in ${rhank!.unit}`}>
+            <div className="relative">
+              <input
+                required
+                type="number"
+                step="any"
+                value={form.value}
+                onChange={(e) => set("value", e.target.value)}
+                placeholder="0"
+                className={`${inputCls} pr-16`}
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-white/30 tracking-widest uppercase pointer-events-none">
+                {rhank!.unit}
+              </span>
+            </div>
           </Field>
 
-          <Field label="Proof URL" hint="Optional — link to video, photo, or screenshot">
+          <Field label="Proof" hint="Optional — link to video, photo, or screenshot">
             <input
               type="url"
               value={form.proof_url}
@@ -148,12 +175,14 @@ export default function EnterRhankPage() {
             />
           </Field>
 
-          {error && <p className="text-sm text-yellow-300">{error}</p>}
+          {error && (
+            <p className="text-sm text-[#ffe600] border border-[#ffe600]/30 bg-[#ffe600]/10 px-4 py-3">{error}</p>
+          )}
 
           <button
             type="submit"
             disabled={status === "submitting"}
-            className="w-full bg-white px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 disabled:opacity-50 transition-colors"
+            className="w-full bg-[#ffe600] px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors mt-2"
           >
             {status === "submitting" ? "Submitting…" : "Submit entry →"}
           </button>
@@ -164,13 +193,13 @@ export default function EnterRhankPage() {
 }
 
 const inputCls =
-  "w-full border border-white/20 bg-white/10 backdrop-blur px-4 py-3 text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors";
+  "w-full border border-white/15 bg-white/8 backdrop-blur px-4 py-3.5 text-white placeholder:text-white/25 outline-none focus:border-white/50 transition-colors text-sm";
 
 function Field({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">{label}</label>
-      <p className="text-[11px] text-white/35 mb-2">{hint}</p>
+      <label className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/50 mb-1 block">{label}</label>
+      <p className="text-[11px] text-white/30 mb-2">{hint}</p>
       {children}
     </div>
   );
@@ -181,7 +210,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
       <ThreeBg />
       <AppNav />
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">{children}</div>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-4">{children}</div>
     </main>
   );
 }
