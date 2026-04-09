@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
 import { supabase, type Rhank, type Entry } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
 
@@ -12,6 +13,7 @@ const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
 export default function LeaderboardPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const [rhank, setRhank] = useState<Rhank | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +78,7 @@ export default function LeaderboardPage() {
   if (loading || !rhank) return <LoadingScreen />;
   if (notFound) return <NotFoundScreen />;
 
+  const isOwner = !!user && !!rhank.user_id && user.id === rhank.user_id;
   const medal = ["🥇", "🥈", "🥉"];
 
   return (
@@ -105,12 +108,14 @@ export default function LeaderboardPage() {
                     {rhank!.direction === "high" ? "↑ Highest" : "↓ Lowest"} {rhank!.unit} wins
                   </span>
                 </p>
-                <button
-                  onClick={() => setEditingDirection(true)}
-                  className="text-[11px] tracking-[0.18em] uppercase text-white/30 hover:text-white/60 underline transition-colors"
-                >
-                  Change
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => setEditingDirection(true)}
+                    className="text-[11px] tracking-[0.18em] uppercase text-white/30 hover:text-white/60 underline transition-colors"
+                  >
+                    Change
+                  </button>
+                )}
               </>
             ) : (
               <div className="flex items-center gap-2 flex-wrap">

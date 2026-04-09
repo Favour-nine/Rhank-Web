@@ -12,6 +12,20 @@ function slugify(text: string) {
 }
 
 export async function POST(req: NextRequest) {
+  // Get authenticated user from bearer token
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  let user_id: string | null = null;
+  if (token) {
+    const { data } = await supabase.auth.getUser(token);
+    user_id = data.user?.id ?? null;
+  }
+
+  if (!user_id) {
+    return NextResponse.json({ error: "You must be signed in to create a Rhank." }, { status: 401 });
+  }
+
   const { title, description, unit, direction, creator_name, latitude, longitude, location_name } = await req.json();
 
   if (!title || !unit || !direction || !creator_name) {
@@ -34,6 +48,7 @@ export async function POST(req: NextRequest) {
       direction,
       creator_name,
       slug,
+      user_id,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
       location_name: location_name || null,

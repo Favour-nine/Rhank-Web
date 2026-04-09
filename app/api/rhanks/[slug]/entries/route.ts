@@ -6,6 +6,15 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  // Optionally attach user_id if signed in
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  let user_id: string | null = null;
+  if (token) {
+    const { data } = await supabase.auth.getUser(token);
+    user_id = data.user?.id ?? null;
+  }
+
   const { participant_name, value, proof_url } = await req.json();
 
   if (!participant_name || value === undefined || value === null) {
@@ -34,6 +43,7 @@ export async function POST(
       participant_name,
       value: num,
       proof_url: proof_url || null,
+      user_id,
     })
     .select()
     .single();

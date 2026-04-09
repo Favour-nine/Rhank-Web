@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
 import { supabase, type Rhank } from "@/lib/supabase";
-import NavBar from "@/components/NavBar";
+import { useAuth } from "@/lib/auth-context";
+import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
@@ -13,12 +14,21 @@ const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 export default function EnterRhankPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [rhank, setRhank] = useState<Rhank | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [form, setForm] = useState({ participant_name: "", value: "", proof_url: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [error, setError] = useState("");
+
+  // Pre-fill name if signed in
+  useEffect(() => {
+    if (user) {
+      const name = user.user_metadata?.name || user.email?.split("@")[0] || "";
+      setForm((f) => ({ ...f, participant_name: name }));
+    }
+  }, [user]);
 
   useEffect(() => {
     supabase
@@ -40,9 +50,14 @@ export default function EnterRhankPage() {
     setStatus("submitting");
     setError("");
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
       const res = await fetch(`/api/rhanks/${slug}/entries`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(form),
       });
       const data = await res.json();
@@ -67,7 +82,7 @@ export default function EnterRhankPage() {
   return (
     <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
       <ThreeBg />
-      <NavBar />
+      <AppNav />
 
       <section className="mx-auto max-w-xl px-6 pt-20 pb-24 md:pt-32">
         <Link
@@ -80,9 +95,25 @@ export default function EnterRhankPage() {
         <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/50 mb-2">
           {rhank!.title}
         </p>
-        <h1 className={`${bebas.className} text-6xl md:text-7xl leading-none mb-10`}>
+        <h1 className={`${bebas.className} text-6xl md:text-7xl leading-none mb-6`}>
           Submit<br />your entry.
         </h1>
+
+        {/* Sign-in credit prompt — only show if not signed in */}
+        {!user && (
+          <div className="mb-8 border border-white/15 bg-white/5 px-4 py-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Earn credit for this entry</p>
+              <p className="text-[11px] text-white/35 mt-0.5">Sign in to link this submission to your account</p>
+            </div>
+            <Link
+              href={`/login?next=/r/${slug}/enter`}
+              className="shrink-0 border border-white/25 px-4 py-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-white hover:bg-white hover:text-[#1a5fff] transition-colors"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Field label="Your name" hint="How you'll appear on the leaderboard">
@@ -149,7 +180,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
       <ThreeBg />
-      <NavBar />
+      <AppNav />
       <div className="flex flex-col items-center justify-center min-h-[60vh]">{children}</div>
     </main>
   );

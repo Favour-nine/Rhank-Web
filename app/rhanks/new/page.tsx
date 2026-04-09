@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Bebas_Neue } from "next/font/google";
 import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
@@ -12,6 +14,12 @@ type Location = { latitude: number; longitude: number; location_name: string } |
 
 export default function NewRhankPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  // Gate: must be signed in to create
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/login?next=/rhanks/new");
+  }, [user, authLoading, router]);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -62,9 +70,14 @@ export default function NewRhankPage() {
     setStatus("loading");
     setError("");
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
       const res = await fetch("/api/rhanks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ ...form, ...location }),
       });
       const data = await res.json();

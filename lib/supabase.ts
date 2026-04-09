@@ -13,6 +13,7 @@ export type Rhank = {
   unit: string;
   direction: "high" | "low";
   creator_name: string;
+  user_id: string | null;
   created_at: string;
   latitude: number | null;
   longitude: number | null;
