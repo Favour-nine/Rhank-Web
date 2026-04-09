@@ -34,27 +34,28 @@ export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yello
 
         {/* Nav */}
         <nav className="flex items-center gap-4 text-[11px] font-medium tracking-[0.26em] uppercase">
-          <Link
-            href="/rhanks"
-            className={`transition-colors ${yellow
-              ? path === "/rhanks" ? "text-black" : "text-black/50 hover:text-black"
-              : path === "/rhanks" ? "text-white" : "text-white/50 hover:text-white"
-            }`}
-          >
-            Browse
-          </Link>
+          {path !== "/rhanks" && (
+            <Link
+              href="/rhanks"
+              className={`transition-colors ${yellow ? "text-black/50 hover:text-black" : "text-white/50 hover:text-white"}`}
+            >
+              Browse
+            </Link>
+          )}
 
           {user ? (
             <>
-              <Link
-                href="/rhanks/new"
-                className={`border px-5 py-2.5 transition-colors duration-200 ${yellow
-                  ? "border-black/25 text-black hover:bg-black hover:text-[#ffe600]"
-                  : "border-white/25 text-white hover:bg-white hover:text-[#1a5fff]"
-                }`}
-              >
-                + Create
-              </Link>
+              {path !== "/rhanks/new" && (
+                <Link
+                  href="/rhanks/new"
+                  className={`border px-5 py-2.5 transition-colors duration-200 ${yellow
+                    ? "border-black/25 text-black hover:bg-black hover:text-[#ffe600]"
+                    : "border-white/25 text-white hover:bg-white hover:text-[#1a5fff]"
+                  }`}
+                >
+                  + Create
+                </Link>
+              )}
 
               {/* User avatar + dropdown */}
               <div className="relative group">
@@ -82,15 +83,17 @@ export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yello
               >
                 Sign in
               </Link>
-              <Link
-                href="/rhanks/new"
-                className={`border px-5 py-2.5 transition-colors duration-200 ${yellow
-                  ? "border-black/25 text-black hover:bg-black hover:text-[#ffe600]"
-                  : "border-white/25 text-white hover:bg-white hover:text-[#1a5fff]"
-                }`}
-              >
-                + Create
-              </Link>
+              {path !== "/rhanks/new" && (
+                <Link
+                  href="/rhanks/new"
+                  className={`border px-5 py-2.5 transition-colors duration-200 ${yellow
+                    ? "border-black/25 text-black hover:bg-black hover:text-[#ffe600]"
+                    : "border-white/25 text-white hover:bg-white hover:text-[#1a5fff]"
+                  }`}
+                >
+                  + Create
+                </Link>
+              )}
             </>
           )}
         </nav>
