@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
@@ -12,6 +12,14 @@ import AppNav from "@/components/AppNav";
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
   const { user, loading } = useAuth();
