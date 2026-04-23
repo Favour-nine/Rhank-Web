@@ -53,7 +53,7 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
 
   // Owner panel
   const [ownerTab, setOwnerTab] = useState<"approve" | "award" | "add">("approve");
-  const [awardMemberId, setAwardMemberId] = useState("");
+  const [awardMemberIds, setAwardMemberIds] = useState<Set<string>>(new Set());
   const [awardAmount, setAwardAmount] = useState("");
   const [awardReason, setAwardReason] = useState("");
   const [awardLoading, setAwardLoading] = useState(false);
@@ -131,27 +131,38 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
     fetchMembers();
   };
 
+  const toggleAwardMember = (id: string) => {
+    setAwardMemberIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllMembers = () => {
+    setAwardMemberIds((prev) =>
+      prev.size === members.length ? new Set() : new Set(members.map((m) => m.id))
+    );
+  };
+
   const handleAward = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!awardMemberId || !awardAmount || Number(awardAmount) === 0) return;
+    if (awardMemberIds.size === 0 || !awardAmount || Number(awardAmount) === 0) return;
     setAwardLoading(true);
     setAwardMsg("");
     const token = await getToken();
-    const res = await fetch(`/api/rhanks/${slug}/tokens`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ member_id: awardMemberId, amount: Number(awardAmount), reason: awardReason || null }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      const member = members.find((m) => m.id === awardMemberId);
-      setAwardMsg(`Done — ${member?.name ?? "Member"} now has ${data.new_balance} ${rhank.unit || "tokens"}.`);
-      setAwardAmount("");
-      setAwardReason("");
-      fetchMembers();
-    } else {
-      setAwardMsg(data.error ?? "Error.");
-    }
+    await Promise.all([...awardMemberIds].map((member_id) =>
+      fetch(`/api/rhanks/${slug}/tokens`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ member_id, amount: Number(awardAmount), reason: awardReason || null }),
+      })
+    ));
+    setAwardMsg(`Done — ${awardMemberIds.size} ${awardMemberIds.size === 1 ? "member" : "members"} updated.`);
+    setAwardAmount("");
+    setAwardReason("");
+    setAwardMemberIds(new Set());
+    fetchMembers();
     setAwardLoading(false);
   };
 
@@ -444,18 +455,32 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
               {ownerTab === "award" && (
                 <form onSubmit={handleAward} className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-1.5 block">Member</label>
-                    <select
-                      required
-                      value={awardMemberId}
-                      onChange={(e) => setAwardMemberId(e.target.value)}
-                      className="w-full border border-white/20 bg-[#1a5fff] px-4 py-2.5 text-white text-sm outline-none focus:border-white/50 transition-colors"
-                    >
-                      <option value="">Select a member…</option>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Members</label>
+                      <button type="button" onClick={toggleAllMembers}
+                        className="text-[10px] tracking-[0.15em] uppercase text-white/30 hover:text-white/60 underline transition-colors">
+                        {awardMemberIds.size === members.length ? "Deselect all" : "Select all"}
+                      </button>
+                    </div>
+                    <div className="border border-white/15 divide-y divide-white/5 max-h-52 overflow-y-auto">
                       {members.map((m) => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.balance > 0 ? "+" : ""}{m.balance} {unit})</option>
+                        <label key={m.id} className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${awardMemberIds.has(m.id) ? "bg-white/10" : "hover:bg-white/5"}`}>
+                          <input
+                            type="checkbox"
+                            checked={awardMemberIds.has(m.id)}
+                            onChange={() => toggleAwardMember(m.id)}
+                            className="w-4 h-4 accent-[#ffe600] shrink-0"
+                          />
+                          <span className="flex-1 text-sm text-white/80">{m.name}</span>
+                          <span className={`text-xs tabular-nums ${m.balance >= 0 ? "text-white/40" : "text-red-400"}`}>
+                            {m.balance > 0 ? "+" : ""}{m.balance} {unit}
+                          </span>
+                        </label>
                       ))}
-                    </select>
+                    </div>
+                    {awardMemberIds.size > 0 && (
+                      <p className="text-[10px] text-white/30 mt-1.5">{awardMemberIds.size} selected</p>
+                    )}
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-1.5 block">
@@ -490,7 +515,12 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
                     disabled={awardLoading}
                     className="w-full bg-[#ffe600] px-5 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors"
                   >
-                    {awardLoading ? "Saving…" : Number(awardAmount) < 0 ? `Deduct ${Math.abs(Number(awardAmount))} ${unit}` : `Award ${awardAmount || "0"} ${unit}`}
+                    {awardLoading
+                      ? "Saving…"
+                      : Number(awardAmount) < 0
+                        ? `Deduct ${Math.abs(Number(awardAmount))} ${unit}${awardMemberIds.size > 1 ? ` · ${awardMemberIds.size} members` : ""}`
+                        : `Award ${awardAmount || "0"} ${unit}${awardMemberIds.size > 1 ? ` · ${awardMemberIds.size} members` : ""}`
+                    }
                   </button>
                   {awardMsg && <p className="text-sm text-white/60 text-center">{awardMsg}</p>}
                 </form>
