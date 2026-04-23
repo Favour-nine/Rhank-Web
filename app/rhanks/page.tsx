@@ -10,7 +10,7 @@ import AppNav from "@/components/AppNav";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
-type RhankWithCount = Rhank & { entry_count: number };
+type RhankWithCount = Rhank & { count: number };
 
 export default function RhanksPage() {
   const { user } = useAuth();
@@ -27,17 +27,26 @@ export default function RhanksPage() {
 
       if (!rhankData) { setLoading(false); return; }
 
-      // Fetch entry counts for all rhanks in one query
-      const { data: counts } = await supabase
-        .from("entries")
-        .select("rhank_id");
+      // Fetch entry counts (score rhanks) and member counts (token rhanks)
+      const [{ data: entryCounts }, { data: memberCounts }] = await Promise.all([
+        supabase.from("entries").select("rhank_id"),
+        supabase.from("members").select("rhank_id").eq("status", "active"),
+      ]);
 
-      const countMap: Record<string, number> = {};
-      (counts ?? []).forEach((e: { rhank_id: string }) => {
-        countMap[e.rhank_id] = (countMap[e.rhank_id] ?? 0) + 1;
+      const entryMap: Record<string, number> = {};
+      (entryCounts ?? []).forEach((e: { rhank_id: string }) => {
+        entryMap[e.rhank_id] = (entryMap[e.rhank_id] ?? 0) + 1;
       });
 
-      setRhanks(rhankData.map((r) => ({ ...r, entry_count: countMap[r.id] ?? 0 })) as RhankWithCount[]);
+      const memberMap: Record<string, number> = {};
+      (memberCounts ?? []).forEach((m: { rhank_id: string }) => {
+        memberMap[m.rhank_id] = (memberMap[m.rhank_id] ?? 0) + 1;
+      });
+
+      setRhanks(rhankData.map((r) => ({
+        ...r,
+        count: r.type === "token" ? (memberMap[r.id] ?? 0) : (entryMap[r.id] ?? 0),
+      })) as RhankWithCount[]);
       setLoading(false);
     }
     load();
@@ -130,7 +139,7 @@ export default function RhanksPage() {
         {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((r) => (
-              <RhankCard key={r.id} rhank={r} isOwner={!!user && r.user_id === user.id} />
+              <RhankCard key={r.id} rhank={r} isOwner={!!user && r.user_id === user.id} count={r.count} />
             ))}
           </div>
         )}
@@ -139,7 +148,8 @@ export default function RhanksPage() {
   );
 }
 
-function RhankCard({ rhank, isOwner }: { rhank: RhankWithCount; isOwner: boolean }) {
+function RhankCard({ rhank, isOwner, count }: { rhank: RhankWithCount; isOwner: boolean; count: number }) {
+  const isToken = rhank.type === "token";
   return (
     <Link
       href={`/r/${rhank.slug}`}
@@ -152,9 +162,11 @@ function RhankCard({ rhank, isOwner }: { rhank: RhankWithCount; isOwner: boolean
         </span>
       )}
 
-      {/* Direction pill */}
+      {/* Type / direction pill */}
       <span className="inline-flex items-center self-start text-[9px] font-bold tracking-[0.2em] uppercase text-white/40 border border-white/10 px-2 py-1 mb-4">
-        {rhank.direction === "high" ? "↑ Highest" : "↓ Lowest"} {rhank.unit}
+        {isToken
+          ? `🪙 ${rhank.unit || "tokens"}`
+          : `${rhank.direction === "high" ? "↑ Highest" : "↓ Lowest"} ${rhank.unit}`}
       </span>
 
       {/* Title */}
@@ -165,21 +177,17 @@ function RhankCard({ rhank, isOwner }: { rhank: RhankWithCount; isOwner: boolean
       {/* Footer */}
       <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/10">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] text-white/35 tracking-[0.15em] uppercase">
-            {rhank.creator_name}
-          </span>
+          <span className="text-[10px] text-white/35 tracking-[0.15em] uppercase">{rhank.creator_name}</span>
           {rhank.location_name && (
-            <span className="text-[10px] text-white/25 tracking-[0.12em]">
-              📍 {rhank.location_name}
-            </span>
+            <span className="text-[10px] text-white/25 tracking-[0.12em]">📍 {rhank.location_name}</span>
           )}
         </div>
         <div className="text-right">
           <span className={`${bebas.className} text-2xl text-white/60 group-hover:text-white/90 transition-colors`}>
-            {rhank.entry_count}
+            {count}
           </span>
           <p className="text-[9px] text-white/25 tracking-[0.15em] uppercase">
-            {rhank.entry_count === 1 ? "entry" : "entries"}
+            {isToken ? (count === 1 ? "member" : "members") : (count === 1 ? "entry" : "entries")}
           </p>
         </div>
       </div>
