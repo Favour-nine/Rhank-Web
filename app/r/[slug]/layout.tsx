@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `${count} ${count === 1 ? "entry" : "entries"} · ${rhank.direction === "high" ? "Highest" : "Lowest"} ${rhank.unit} wins · Created by ${rhank.creator_name}`;
 
   return {
-    title: `${rhank.title} — Rhank`,
+    title: `${rhank.title} | Rhank`,
     description,
     openGraph: {
       title: rhank.title,

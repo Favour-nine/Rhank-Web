@@ -71,7 +71,7 @@ export default function RhanksPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 mb-2">
-              {loading ? "—" : `${rhanks.length} board${rhanks.length !== 1 ? "s" : ""}`}
+              {loading ? "" : `${rhanks.length} board${rhanks.length !== 1 ? "s" : ""}`}
             </p>
             <h1 className={`${bebas.className} text-6xl md:text-8xl leading-none`}>Browse.</h1>
           </div>

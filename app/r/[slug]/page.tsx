@@ -207,7 +207,7 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
         body: JSON.stringify({ member_id, amount: Number(awardAmount), reason: awardReason || null }),
       })
     ));
-    setAwardMsg(`Done — ${awardMemberIds.size} ${awardMemberIds.size === 1 ? "member" : "members"} updated.`);
+    setAwardMsg(`Done. ${awardMemberIds.size} ${awardMemberIds.size === 1 ? "member" : "members"} updated.`);
     setAwardAmount("");
     setAwardReason("");
     setAwardMemberIds(new Set());
@@ -331,7 +331,7 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
           )}
           {claimed && (
             <span className="inline-flex items-center gap-2 text-sm text-green-400 font-semibold tracking-[0.18em] uppercase">
-              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed — reload to manage
+              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed. Reload to manage.
             </span>
           )}
         </div>
@@ -874,7 +874,7 @@ function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
           )}
           {claimed && (
             <span className="inline-flex items-center gap-2 text-sm text-green-400 font-semibold tracking-[0.18em] uppercase">
-              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed — reload to manage
+              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed. Reload to manage.
             </span>
           )}
         </div>

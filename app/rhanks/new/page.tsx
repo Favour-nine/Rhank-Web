@@ -123,12 +123,12 @@ export default function NewRhankPage() {
               required
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder={form.type === "token" ? "Year 10 English — Period 3" : "Longest dead hang in the gym"}
+              placeholder={form.type === "token" ? "Year 10 English, Period 3" : "Longest dead hang in the gym"}
               className={inputCls}
             />
           </Field>
 
-          <Field label="Description" hint="Optional — extra context or rules">
+          <Field label="Description" hint="Optional. Extra context or rules.">
             <textarea
               rows={3}
               value={form.description}

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 
 export const metadata: Metadata = {
-  title: "Rhank — Leaderboards for anything",
+  title: "Rhank | Leaderboards for anything",
   description: "Create a public leaderboard for literally anything. The tallest, the fastest, the most loyal. Set the rules, people enter, the board ranks them live.",
   icons: {
     icon: "/Rhank_Black.svg",

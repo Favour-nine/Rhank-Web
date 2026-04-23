@@ -165,7 +165,7 @@ export default function EnterRhankPage() {
             </div>
           </Field>
 
-          <Field label="Proof" hint="Optional — link to video, photo, or screenshot">
+          <Field label="Proof" hint="Optional. Link to a video, photo, or screenshot.">
             <input
               type="url"
               value={form.proof_url}

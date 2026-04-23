@@ -4,7 +4,7 @@ import ThreeBg from "@/components/ThreeBg";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
-export const metadata = { title: "Privacy Policy — Rhank" };
+export const metadata = { title: "Privacy Policy | Rhank" };
 
 export default function PrivacyPage() {
   return (
@@ -24,9 +24,9 @@ export default function PrivacyPage() {
 
           <Section title="What we collect">
             <ul className="list-disc list-inside space-y-1">
-              <li><strong className="text-white/90">Account data</strong> — name and email address when you sign up.</li>
-              <li><strong className="text-white/90">Leaderboard data</strong> — your display name, scores or token balances, and transaction history within leaderboards you join.</li>
-              <li><strong className="text-white/90">Session data</strong> — an authentication token stored in your browser to keep you signed in.</li>
+              <li><strong className="text-white/90">Account data</strong>:name and email address when you sign up.</li>
+              <li><strong className="text-white/90">Leaderboard data</strong>:your display name, scores or token balances, and transaction history within leaderboards you join.</li>
+              <li><strong className="text-white/90">Session data</strong>:an authentication token stored in your browser to keep you signed in.</li>
             </ul>
           </Section>
 
@@ -57,19 +57,19 @@ export default function PrivacyPage() {
 
           <Section title="Your rights (GDPR)">
             <ul className="list-disc list-inside space-y-1">
-              <li><strong className="text-white/90">Access</strong> — request a copy of your data.</li>
-              <li><strong className="text-white/90">Rectification</strong> — correct inaccurate data.</li>
-              <li><strong className="text-white/90">Erasure</strong> — request deletion of your account and associated data.</li>
-              <li><strong className="text-white/90">Portability</strong> — receive your data in a machine-readable format.</li>
-              <li><strong className="text-white/90">Objection</strong> — object to processing of your data.</li>
+              <li><strong className="text-white/90">Access</strong>:request a copy of your data.</li>
+              <li><strong className="text-white/90">Rectification</strong>:correct inaccurate data.</li>
+              <li><strong className="text-white/90">Erasure</strong>:request deletion of your account and associated data.</li>
+              <li><strong className="text-white/90">Portability</strong>:receive your data in a machine-readable format.</li>
+              <li><strong className="text-white/90">Objection</strong>:object to processing of your data.</li>
             </ul>
             <p className="mt-3">To exercise any right, contact us at <strong className="text-white/90">jumiarmusic@gmail.com</strong>. We will respond within 30 days.</p>
           </Section>
 
           <Section title="Third-party processors">
             <ul className="list-disc list-inside space-y-1">
-              <li><strong className="text-white/90">Supabase</strong> (supabase.com) — database and authentication. Data stored in EU region.</li>
-              <li><strong className="text-white/90">Vercel</strong> (vercel.com) — hosting and edge functions.</li>
+              <li><strong className="text-white/90">Supabase</strong> (supabase.com):database and authentication. Data stored in EU region.</li>
+              <li><strong className="text-white/90">Vercel</strong> (vercel.com):hosting and edge functions.</li>
             </ul>
           </Section>
 
