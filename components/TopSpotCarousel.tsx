@@ -10,6 +10,7 @@ type Slide = {
   rhankTitle: string;
   unit: string;
   direction: "high" | "low";
+  type: "score" | "token";
   name: string;
   value: number;
   slug: string;
@@ -33,7 +34,6 @@ export default function TopSpotCarousel() {
 
   useEffect(() => {
     async function load() {
-      // Get visitor location (best effort, non-blocking)
       let userLat: number | null = null;
       let userLon: number | null = null;
       try {
@@ -48,7 +48,7 @@ export default function TopSpotCarousel() {
 
       const { data: rhanks } = await supabase
         .from("rhanks")
-        .select("id, title, unit, direction, slug, latitude, longitude, location_name")
+        .select("id, title, unit, direction, type, slug, latitude, longitude, location_name")
         .order("created_at", { ascending: false });
 
       if (!rhanks?.length) return;
@@ -57,28 +57,52 @@ export default function TopSpotCarousel() {
 
       await Promise.all(
         rhanks.map(async (r) => {
-          const { data: entries } = await supabase
-            .from("entries")
-            .select("participant_name, value")
-            .eq("rhank_id", r.id)
-            .order("value", { ascending: r.direction === "low" })
-            .limit(1);
+          if (r.type === "token") {
+            const { data: members } = await supabase
+              .from("members")
+              .select("name, balance")
+              .eq("rhank_id", r.id)
+              .eq("status", "active")
+              .order("balance", { ascending: false })
+              .limit(1);
 
-          if (entries?.length) {
-            results.push({
-              rhankTitle: r.title,
-              unit: r.unit,
-              direction: r.direction,
-              name: entries[0].participant_name,
-              value: entries[0].value,
-              slug: r.slug,
-              locationName: r.location_name,
-            });
+            if (members?.length) {
+              results.push({
+                rhankTitle: r.title,
+                unit: r.unit || "tokens",
+                direction: "high",
+                type: "token",
+                name: members[0].name,
+                value: members[0].balance,
+                slug: r.slug,
+                locationName: r.location_name,
+              });
+            }
+          } else {
+            const { data: entries } = await supabase
+              .from("entries")
+              .select("participant_name, value")
+              .eq("rhank_id", r.id)
+              .order("value", { ascending: r.direction === "low" })
+              .limit(1);
+
+            if (entries?.length) {
+              results.push({
+                rhankTitle: r.title,
+                unit: r.unit,
+                direction: r.direction,
+                type: "score",
+                name: entries[0].participant_name,
+                value: entries[0].value,
+                slug: r.slug,
+                locationName: r.location_name,
+              });
+            }
           }
         })
       );
 
-      // Sort: nearby rhanks first (those with coords), then rest
+      // Sort: nearby rhanks first, then rest
       if (userLat !== null && userLon !== null) {
         const withCoords = rhanks.filter((r) => r.latitude != null && r.longitude != null);
         const withoutCoords = rhanks.filter((r) => r.latitude == null || r.longitude == null);
@@ -104,7 +128,6 @@ export default function TopSpotCarousel() {
     load();
   }, []);
 
-  // Auto-cycle with fade
   useEffect(() => {
     if (slides.length <= 1) return;
     const timer = setInterval(() => {
@@ -135,22 +158,18 @@ export default function TopSpotCarousel() {
       className="text-center w-full"
       style={{ transition: "opacity 0.4s ease", opacity: visible ? 1 : 0 }}
     >
-      {/* Category label */}
       <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-black/40 mb-3">
         #1 in {slide.rhankTitle}{slide.locationName ? ` · ${slide.locationName}` : ""}
       </p>
 
-      {/* Winner name */}
       <h1 className={`${bebas.className} text-7xl md:text-[10rem] leading-none tracking-tight text-black`}>
         {slide.name}
       </h1>
 
-      {/* Score */}
       <p className={`${bebas.className} text-4xl md:text-6xl text-black/50 mt-2`}>
-        {slide.value} {slide.unit}
+        {slide.type === "token" && slide.value > 0 ? "+" : ""}{slide.value} {slide.unit}
       </p>
 
-      {/* Dot indicators */}
       {slides.length > 1 && (
         <div className="flex justify-center gap-2 mt-8">
           {slides.map((_, i) => (
