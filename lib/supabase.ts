@@ -14,10 +14,32 @@ export type Rhank = {
   direction: "high" | "low";
   creator_name: string;
   user_id: string | null;
+  type: "score" | "token";
+  join_mode: "open" | "request" | "invite";
   created_at: string;
   latitude: number | null;
   longitude: number | null;
   location_name: string | null;
+};
+
+export type Member = {
+  id: string;
+  rhank_id: string;
+  user_id: string | null;
+  name: string;
+  status: "pending" | "active" | "rejected";
+  balance: number;
+  created_at: string;
+};
+
+export type TokenTransaction = {
+  id: string;
+  rhank_id: string;
+  member_id: string;
+  amount: number;
+  reason: string | null;
+  created_by: string | null;
+  created_at: string;
 };
 
 export type Entry = {

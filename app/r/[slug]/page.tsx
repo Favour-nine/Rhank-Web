@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
-import { supabase, type Rhank, type Entry } from "@/lib/supabase";
+import { supabase, type Rhank, type Entry, type Member } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
@@ -15,52 +15,577 @@ export default function LeaderboardPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const [rhank, setRhank] = useState<Rhank | null>(null);
-  const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    supabase.from("rhanks").select("*").eq("slug", slug).single().then(({ data, error }) => {
+      if (error || !data) { setNotFound(true); }
+      else setRhank(data as Rhank);
+      setLoading(false);
+    });
+  }, [slug]);
+
+  if (loading) return <LoadingScreen />;
+  if (notFound || !rhank) return <NotFoundScreen />;
+
+  const isOwner = !!user && !!rhank.user_id && user.id === rhank.user_id;
+
+  if (rhank.type === "token") {
+    return <TokenLeaderboard slug={slug} rhank={rhank} isOwner={isOwner} user={user} />;
+  }
+  return <ScoreLeaderboard slug={slug} rhank={rhank} isOwner={isOwner} user={user} />;
+}
+
+// ─── TOKEN LEADERBOARD ────────────────────────────────────────────────────────
+
+function TokenLeaderboard({ slug, rhank, isOwner, user }: {
+  slug: string; rhank: Rhank; isOwner: boolean; user: ReturnType<typeof useAuth>["user"];
+}) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [pending, setPending] = useState<Member[]>([]);
+  const [myMemberId, setMyMemberId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Join form
+  const [joinName, setJoinName] = useState("");
+  const [joinStatus, setJoinStatus] = useState<"idle" | "loading" | "done" | "pending_approval">("idle");
+
+  // Owner panel
+  const [ownerTab, setOwnerTab] = useState<"approve" | "award" | "add">("approve");
+  const [awardMemberId, setAwardMemberId] = useState("");
+  const [awardAmount, setAwardAmount] = useState("");
+  const [awardReason, setAwardReason] = useState("");
+  const [awardLoading, setAwardLoading] = useState(false);
+  const [awardMsg, setAwardMsg] = useState("");
+  const [addName, setAddName] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
+  const csvRef = useRef<HTMLInputElement>(null);
+
+  const fetchMembers = useCallback(async () => {
+    const { data } = await supabase
+      .from("members")
+      .select("*")
+      .eq("rhank_id", rhank.id)
+      .order("balance", { ascending: false });
+    const all = (data ?? []) as Member[];
+    setMembers(all.filter((m) => m.status === "active"));
+    setPending(all.filter((m) => m.status === "pending"));
+  }, [rhank.id]);
+
+  useEffect(() => {
+    fetchMembers();
+    const stored = localStorage.getItem(`rhank_member_${slug}`);
+    if (stored) setMyMemberId(stored);
+
+    const channel = supabase
+      .channel(`members-${slug}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "members" }, fetchMembers)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [slug, fetchMembers]);
+
+  const getToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  };
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinName.trim()) return;
+    setJoinStatus("loading");
+    const token = await getToken();
+    const res = await fetch(`/api/rhanks/${slug}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ name: joinName.trim() }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem(`rhank_member_${slug}`, data.member.id);
+      setMyMemberId(data.member.id);
+      setJoinStatus(data.status === "active" ? "done" : "pending_approval");
+      fetchMembers();
+    } else {
+      setJoinStatus("idle");
+    }
+  };
+
+  const handleApprove = async (memberId: string, status: "active" | "rejected") => {
+    const token = await getToken();
+    await fetch(`/api/rhanks/${slug}/members/${memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ status }),
+    });
+    fetchMembers();
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    const token = await getToken();
+    await fetch(`/api/rhanks/${slug}/members/${memberId}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    fetchMembers();
+  };
+
+  const handleAward = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!awardMemberId || !awardAmount || Number(awardAmount) === 0) return;
+    setAwardLoading(true);
+    setAwardMsg("");
+    const token = await getToken();
+    const res = await fetch(`/api/rhanks/${slug}/tokens`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ member_id: awardMemberId, amount: Number(awardAmount), reason: awardReason || null }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      const member = members.find((m) => m.id === awardMemberId);
+      setAwardMsg(`Done — ${member?.name ?? "Member"} now has ${data.new_balance} ${rhank.unit || "tokens"}.`);
+      setAwardAmount("");
+      setAwardReason("");
+      fetchMembers();
+    } else {
+      setAwardMsg(data.error ?? "Error.");
+    }
+    setAwardLoading(false);
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addName.trim()) return;
+    setAddLoading(true);
+    const token = await getToken();
+    await fetch(`/api/rhanks/${slug}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ name: addName.trim(), owner_add: true }),
+    });
+    setAddName("");
+    setAddLoading(false);
+    fetchMembers();
+  };
+
+  const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvLoading(true);
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const token = await getToken();
+
+    // Skip header row if it looks like "name" or "Name"
+    const start = /^name$/i.test(lines[0]) ? 1 : 0;
+    const names = lines.slice(start).map((l) => l.split(",")[0].trim()).filter(Boolean);
+
+    await Promise.all(names.map((name) =>
+      fetch(`/api/rhanks/${slug}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ name, owner_add: true }),
+      })
+    ));
+    if (csvRef.current) csvRef.current.value = "";
+    setCsvLoading(false);
+    fetchMembers();
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const unit = rhank.unit || "tokens";
+  const isMember = !!myMemberId;
+  const myMember = members.find((m) => m.id === myMemberId);
+  const canJoin = !isMember && rhank.join_mode !== "invite";
+
+  return (
+    <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
+      <ThreeBg />
+      <AppNav />
+
+      <section className="mx-auto max-w-3xl px-6 pt-16 pb-24 md:pt-24">
+
+        {/* Meta row */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40">
+            By {rhank.creator_name}
+          </span>
+          <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
+            🪙 Token Rhank
+          </span>
+          {rhank.location_name && (
+            <>
+              <span className="text-white/20">·</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-white/40">📍 {rhank.location_name}</span>
+            </>
+          )}
+          <span className="ml-auto flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-white/40">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            Live
+          </span>
+        </div>
+
+        {/* Title */}
+        <h1 className={`${bebas.className} text-5xl md:text-8xl leading-none mb-3`}>
+          {rhank.title}
+        </h1>
+        {rhank.description && (
+          <p className="text-white/50 text-sm leading-relaxed max-w-xl mb-4">{rhank.description}</p>
+        )}
+
+        {/* Share */}
+        <div className="flex flex-wrap gap-3 mb-10">
+          <button
+            onClick={copyLink}
+            className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors"
+          >
+            {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
+          </button>
+        </div>
+
+        {/* My balance banner */}
+        {myMember && (
+          <div className="border border-[#ffe600]/40 bg-[#ffe600]/10 px-5 py-4 flex items-center justify-between mb-6">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#ffe600]/70">Your balance</p>
+              <p className="font-bold text-lg">{myMember.name}</p>
+            </div>
+            <div className="text-right">
+              <p className={`${bebas.className} text-4xl ${myMember.balance >= 0 ? "text-[#ffe600]" : "text-red-400"}`}>
+                {myMember.balance > 0 ? "+" : ""}{myMember.balance}
+              </p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest">{unit}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Pending approval banner */}
+        {joinStatus === "pending_approval" && (
+          <div className="border border-white/20 bg-white/5 px-5 py-4 mb-6">
+            <p className="text-sm text-white/70">✋ Your request to join is pending approval from the creator.</p>
+          </div>
+        )}
+
+        {/* Members leaderboard */}
+        {members.length === 0 ? (
+          <div className="border border-white/10 bg-white/5 px-8 py-16 text-center mb-8">
+            <p className={`${bebas.className} text-4xl text-white/20 mb-3`}>No members yet.</p>
+            {canJoin && <p className="text-white/30 text-sm">Be the first to join below.</p>}
+          </div>
+        ) : (
+          <div className="mb-8">
+            {/* Top 3 */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              {members.slice(0, 3).map((m, i) => (
+                <div key={m.id} className={`relative p-5 border ${
+                  m.id === myMemberId ? "border-[#ffe600]/60 bg-[#ffe600]/10" :
+                  i === 0 ? "border-[#ffe600]/40 bg-white/10" : "border-white/10 bg-white/5"
+                }`}>
+                  <div className={`text-xs font-bold tracking-[0.2em] uppercase mb-3 ${i === 0 ? "text-[#ffe600]" : "text-white/30"}`}>
+                    {i === 0 ? "🥇 1st" : i === 1 ? "🥈 2nd" : "🥉 3rd"}
+                  </div>
+                  <p className={`font-bold text-lg leading-tight mb-1 ${i === 0 ? "text-white" : "text-white/80"}`}>
+                    {m.name}
+                  </p>
+                  <p className={`${bebas.className} text-3xl ${m.balance >= 0 ? (i === 0 ? "text-[#ffe600]" : "text-white/60") : "text-red-400"}`}>
+                    {m.balance > 0 ? "+" : ""}{m.balance}
+                    <span className="text-sm ml-1 font-sans font-normal opacity-60">{unit}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Rest */}
+            {members.length > 3 && (
+              <div className="border border-white/10 divide-y divide-white/5">
+                <div className="grid grid-cols-[2.5rem_1fr_auto] px-5 py-2.5 text-[10px] font-semibold tracking-[0.22em] uppercase text-white/25">
+                  <span>#</span><span>Name</span><span>{unit}</span>
+                </div>
+                {members.slice(3).map((m, i) => (
+                  <div key={m.id} className={`grid grid-cols-[2.5rem_1fr_auto] items-center px-5 py-3.5 ${
+                    m.id === myMemberId ? "bg-[#ffe600]/5" : "hover:bg-white/5"
+                  }`}>
+                    <span className="text-sm font-bold text-white/30 tabular-nums">{i + 4}</span>
+                    <p className="text-sm font-medium text-white/70">{m.name}</p>
+                    <span className={`text-base font-bold tabular-nums ${m.balance >= 0 ? "text-white/60" : "text-red-400"}`}>
+                      {m.balance > 0 ? "+" : ""}{m.balance}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="mt-4 text-[10px] text-white/20 text-center tracking-[0.18em] uppercase">
+              {members.length} {members.length === 1 ? "member" : "members"} · updates live
+            </p>
+          </div>
+        )}
+
+        {/* Join section */}
+        {canJoin && joinStatus !== "done" && joinStatus !== "pending_approval" && (
+          <div className="border border-white/15 bg-white/5 px-5 py-6 mb-8">
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">
+              {rhank.join_mode === "open" ? "Join this leaderboard" : "Request to join"}
+            </p>
+            <p className="text-[11px] text-white/30 mb-4">
+              {rhank.join_mode === "open" ? "Enter your name to appear on the board." : "Your request will be reviewed by the creator."}
+            </p>
+            <form onSubmit={handleJoin} className="flex gap-3">
+              <input
+                required
+                value={joinName}
+                onChange={(e) => setJoinName(e.target.value)}
+                placeholder="Your name"
+                className="flex-1 border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-white/50 text-sm transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={joinStatus === "loading"}
+                className="bg-[#ffe600] px-6 py-2.5 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors"
+              >
+                {joinStatus === "loading" ? "…" : rhank.join_mode === "open" ? "Join" : "Request"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {rhank.join_mode === "invite" && !isMember && !isOwner && (
+          <div className="border border-white/10 bg-white/5 px-5 py-4 mb-8">
+            <p className="text-sm text-white/40">🔒 This leaderboard is invite-only. The creator adds members directly.</p>
+          </div>
+        )}
+
+        {/* Owner panel */}
+        {isOwner && (
+          <div className="border border-white/20 bg-white/5">
+            <div className="border-b border-white/10 px-5 pt-5 pb-0">
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/30 mb-4">Creator panel</p>
+              <div className="flex gap-0">
+                {(["approve", "award", "add"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setOwnerTab(tab)}
+                    className={`px-5 py-2.5 text-[11px] font-bold tracking-[0.18em] uppercase transition-colors border-t border-x ${
+                      ownerTab === tab
+                        ? "border-white/30 bg-white/10 text-white"
+                        : "border-transparent text-white/30 hover:text-white/60"
+                    }`}
+                  >
+                    {tab === "approve" ? `Pending${pending.length > 0 ? ` (${pending.length})` : ""}` : tab === "award" ? "Award / Deduct" : "Add Members"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5">
+              {/* Approve tab */}
+              {ownerTab === "approve" && (
+                <>
+                  {pending.length === 0 ? (
+                    <p className="text-sm text-white/30">No pending requests.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pending.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between gap-4 border border-white/10 px-4 py-3">
+                          <p className="text-sm font-medium text-white/80">{m.name}</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApprove(m.id, "active")}
+                              className="px-4 py-1.5 text-[11px] font-bold tracking-[0.15em] uppercase bg-[#ffe600] text-black hover:bg-[#ffe600]/90 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleApprove(m.id, "rejected")}
+                              className="px-4 py-1.5 text-[11px] font-bold tracking-[0.15em] uppercase border border-white/20 text-white/50 hover:text-white hover:border-white/50 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {members.length > 0 && (
+                    <div className="mt-6 border-t border-white/10 pt-5">
+                      <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-3">Active members</p>
+                      <div className="space-y-1">
+                        {members.map((m) => (
+                          <div key={m.id} className="flex items-center justify-between gap-4 px-3 py-2 hover:bg-white/5 rounded">
+                            <p className="text-sm text-white/70">{m.name}</p>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-sm font-bold tabular-nums ${m.balance >= 0 ? "text-white/50" : "text-red-400"}`}>
+                                {m.balance > 0 ? "+" : ""}{m.balance} {unit}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteMember(m.id)}
+                                className="text-[10px] text-white/20 hover:text-red-400 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Award / Deduct tab */}
+              {ownerTab === "award" && (
+                <form onSubmit={handleAward} className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-1.5 block">Member</label>
+                    <select
+                      required
+                      value={awardMemberId}
+                      onChange={(e) => setAwardMemberId(e.target.value)}
+                      className="w-full border border-white/20 bg-[#1a5fff] px-4 py-2.5 text-white text-sm outline-none focus:border-white/50 transition-colors"
+                    >
+                      <option value="">Select a member…</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.balance > 0 ? "+" : ""}{m.balance} {unit})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-1.5 block">
+                      Amount <span className="text-white/25">(positive = award, negative = deduct)</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setAwardAmount((v) => String(Number(v || 0) - 1))}
+                        className="border border-white/20 px-4 py-2.5 text-white/60 hover:text-white hover:border-white/50 text-lg transition-colors">−</button>
+                      <input
+                        required
+                        type="number"
+                        value={awardAmount}
+                        onChange={(e) => setAwardAmount(e.target.value)}
+                        placeholder="0"
+                        className="flex-1 border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-white/50 text-sm transition-colors text-center tabular-nums"
+                      />
+                      <button type="button" onClick={() => setAwardAmount((v) => String(Number(v || 0) + 1))}
+                        className="border border-white/20 px-4 py-2.5 text-white/60 hover:text-white hover:border-white/50 text-lg transition-colors">+</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-1.5 block">Reason <span className="text-white/25">(optional)</span></label>
+                    <input
+                      value={awardReason}
+                      onChange={(e) => setAwardReason(e.target.value)}
+                      placeholder="e.g. Great participation today"
+                      className="w-full border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-white/50 text-sm transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={awardLoading}
+                    className="w-full bg-[#ffe600] px-5 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors"
+                  >
+                    {awardLoading ? "Saving…" : Number(awardAmount) < 0 ? `Deduct ${Math.abs(Number(awardAmount))} ${unit}` : `Award ${awardAmount || "0"} ${unit}`}
+                  </button>
+                  {awardMsg && <p className="text-sm text-white/60 text-center">{awardMsg}</p>}
+                </form>
+              )}
+
+              {/* Add Members tab */}
+              {ownerTab === "add" && (
+                <div className="space-y-6">
+                  <form onSubmit={handleAddMember} className="space-y-3">
+                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 block">Add single member</label>
+                    <div className="flex gap-3">
+                      <input
+                        required
+                        value={addName}
+                        onChange={(e) => setAddName(e.target.value)}
+                        placeholder="Member name"
+                        className="flex-1 border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-white/50 text-sm transition-colors"
+                      />
+                      <button
+                        type="submit"
+                        disabled={addLoading}
+                        className="bg-white px-6 py-2.5 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 disabled:opacity-50 transition-colors"
+                      >
+                        {addLoading ? "…" : "Add"}
+                      </button>
+                    </div>
+                  </form>
+
+                  <div className="border-t border-white/10 pt-5">
+                    <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 block mb-1.5">Bulk import via CSV</label>
+                    <p className="text-[11px] text-white/30 mb-3">Upload a CSV file with one name per row (or a "name" header column). All members are added as active.</p>
+                    <input
+                      ref={csvRef}
+                      type="file"
+                      accept=".csv,text/csv"
+                      onChange={handleCSV}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className={`inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase cursor-pointer transition-colors ${
+                        csvLoading ? "text-white/30 pointer-events-none" : "text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {csvLoading ? "Importing…" : "Upload CSV"}
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+// ─── SCORE LEADERBOARD ────────────────────────────────────────────────────────
+
+function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
+  slug: string; rhank: Rhank; isOwner: boolean; user: ReturnType<typeof useAuth>["user"];
+}) {
+  const [entries, setEntries] = useState<Entry[]>([]);
   const [copied, setCopied] = useState(false);
   const [editingDirection, setEditingDirection] = useState(false);
   const [savingDirection, setSavingDirection] = useState(false);
   const [newEntryId, setNewEntryId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async (highlightId?: string) => {
-    const { data: r, error } = await supabase
-      .from("rhanks")
-      .select("*")
-      .eq("slug", slug)
-      .single();
-
-    if (error || !r) { setNotFound(true); setLoading(false); return; }
-    setRhank(r as Rhank);
-
-    const { data: e } = await supabase
+  const fetchEntries = useCallback(async (highlightId?: string) => {
+    const { data } = await supabase
       .from("entries")
       .select("*")
-      .eq("rhank_id", r.id)
-      .order("value", { ascending: r.direction === "low" });
-
-    setEntries((e ?? []) as Entry[]);
-    setLoading(false);
-
+      .eq("rhank_id", rhank.id)
+      .order("value", { ascending: rhank.direction === "low" });
+    setEntries((data ?? []) as Entry[]);
     if (highlightId) {
       setNewEntryId(highlightId);
       setTimeout(() => setNewEntryId(null), 2500);
     }
-  }, [slug]);
+  }, [rhank.id, rhank.direction]);
 
   useEffect(() => {
-    fetchData();
+    fetchEntries();
     const channel = supabase
       .channel(`entries-${slug}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "entries" }, (payload) => {
-        fetchData((payload.new as Entry).id);
+        fetchEntries((payload.new as Entry).id);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [slug, fetchData]);
+  }, [slug, fetchEntries]);
 
   const saveDirection = async (dir: "high" | "low") => {
-    if (!rhank || dir === rhank.direction) { setEditingDirection(false); return; }
+    if (dir === rhank.direction) { setEditingDirection(false); return; }
     setSavingDirection(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -69,7 +594,7 @@ export default function LeaderboardPage() {
       headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ direction: dir }),
     });
-    await fetchData();
+    await fetchEntries();
     setSavingDirection(false);
     setEditingDirection(false);
   };
@@ -80,10 +605,6 @@ export default function LeaderboardPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading || !rhank) return <LoadingScreen />;
-  if (notFound) return <NotFoundScreen />;
-
-  const isOwner = !!user && !!rhank.user_id && user.id === rhank.user_id;
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
 
@@ -105,14 +626,12 @@ export default function LeaderboardPage() {
               <span className="text-[10px] tracking-[0.2em] uppercase text-white/40">📍 {rhank.location_name}</span>
             </>
           )}
-          {/* Live indicator */}
           <span className="ml-auto flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-white/40">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
             Live
           </span>
         </div>
 
-        {/* Title */}
         <h1 className={`${bebas.className} text-5xl md:text-8xl leading-none mb-3`}>
           {rhank.title}
         </h1>
@@ -129,10 +648,8 @@ export default function LeaderboardPage() {
                 {rhank.direction === "high" ? "↑ Highest" : "↓ Lowest"} {rhank.unit} wins
               </span>
               {isOwner && (
-                <button
-                  onClick={() => setEditingDirection(true)}
-                  className="text-[10px] tracking-[0.18em] uppercase text-white/25 hover:text-white/50 underline transition-colors"
-                >
+                <button onClick={() => setEditingDirection(true)}
+                  className="text-[10px] tracking-[0.18em] uppercase text-white/25 hover:text-white/50 underline transition-colors">
                   Edit
                 </button>
               )}
@@ -141,72 +658,50 @@ export default function LeaderboardPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] text-white/40 uppercase tracking-widest">Who wins?</span>
               {(["high", "low"] as const).map((dir) => (
-                <button
-                  key={dir}
-                  disabled={savingDirection}
-                  onClick={() => saveDirection(dir)}
+                <button key={dir} disabled={savingDirection} onClick={() => saveDirection(dir)}
                   className={`px-4 py-1.5 text-[11px] font-bold tracking-[0.18em] uppercase border transition-all ${
                     rhank.direction === dir ? "border-white bg-white text-[#1a5fff]" : "border-white/30 text-white hover:border-white"
-                  }`}
-                >
+                  }`}>
                   {dir === "high" ? "↑ Highest" : "↓ Lowest"}
                 </button>
               ))}
-              <button onClick={() => setEditingDirection(false)} className="text-[11px] text-white/30 hover:text-white/60 transition-colors">
-                Cancel
-              </button>
+              <button onClick={() => setEditingDirection(false)} className="text-[11px] text-white/30 hover:text-white/60 transition-colors">Cancel</button>
             </div>
           )}
         </div>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="flex flex-wrap gap-3 mb-10">
-          <Link
-            href={`/r/${slug}/enter`}
-            className="inline-flex items-center gap-2 bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors"
-          >
+          <Link href={`/r/${slug}/enter`}
+            className="inline-flex items-center gap-2 bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors">
             + Submit entry
           </Link>
-          <button
-            onClick={copyLink}
-            className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors"
-          >
-            {copied ? (
-              <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</>
-            ) : (
-              "Share link"
-            )}
+          <button onClick={copyLink}
+            className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
+            {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
           </button>
         </div>
 
-        {/* Empty state */}
+        {/* Empty */}
         {entries.length === 0 && (
           <div className="border border-white/10 bg-white/5 px-8 py-16 text-center">
             <p className={`${bebas.className} text-4xl text-white/20 mb-3`}>No entries yet.</p>
             <p className="text-white/30 text-sm mb-6">Be the first to get on the board.</p>
-            <Link
-              href={`/r/${slug}/enter`}
-              className="inline-flex items-center bg-white px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 transition-colors"
-            >
+            <Link href={`/r/${slug}/enter`}
+              className="inline-flex items-center bg-white px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 transition-colors">
               Submit first entry →
             </Link>
           </div>
         )}
 
-        {/* Top 3 podium */}
+        {/* Top 3 */}
         {top3.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             {top3.map((entry, i) => (
-              <div
-                key={entry.id}
-                className={`relative p-5 border transition-all duration-700 ${
-                  newEntryId === entry.id ? "border-[#ffe600] bg-[#ffe600]/10" :
-                  i === 0
-                    ? "border-[#ffe600]/60 bg-white/10"
-                    : "border-white/10 bg-white/5"
-                }`}
-              >
-                {/* Rank badge */}
+              <div key={entry.id} className={`relative p-5 border transition-all duration-700 ${
+                newEntryId === entry.id ? "border-[#ffe600] bg-[#ffe600]/10" :
+                i === 0 ? "border-[#ffe600]/60 bg-white/10" : "border-white/10 bg-white/5"
+              }`}>
                 <div className={`text-xs font-bold tracking-[0.2em] uppercase mb-3 ${i === 0 ? "text-[#ffe600]" : "text-white/30"}`}>
                   {i === 0 ? "🥇 1st" : i === 1 ? "🥈 2nd" : "🥉 3rd"}
                 </div>
@@ -228,29 +723,22 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* Rest of entries */}
+        {/* Rest */}
         {rest.length > 0 && (
           <div className="border border-white/10 divide-y divide-white/5">
             <div className="grid grid-cols-[2.5rem_1fr_auto] px-5 py-2.5 text-[10px] font-semibold tracking-[0.22em] uppercase text-white/25">
-              <span>#</span>
-              <span>Name</span>
-              <span>{rhank.unit}</span>
+              <span>#</span><span>Name</span><span>{rhank.unit}</span>
             </div>
             {rest.map((entry, i) => (
-              <div
-                key={entry.id}
-                className={`grid grid-cols-[2.5rem_1fr_auto] items-center px-5 py-3.5 transition-all duration-700 ${
-                  newEntryId === entry.id ? "bg-[#ffe600]/10" : "hover:bg-white/5"
-                }`}
-              >
+              <div key={entry.id} className={`grid grid-cols-[2.5rem_1fr_auto] items-center px-5 py-3.5 transition-all duration-700 ${
+                newEntryId === entry.id ? "bg-[#ffe600]/10" : "hover:bg-white/5"
+              }`}>
                 <span className="text-sm font-bold text-white/30 tabular-nums">{i + 4}</span>
                 <div>
                   <p className="text-sm font-medium text-white/70">{entry.participant_name}</p>
                   {entry.proof_url && (
                     <a href={entry.proof_url} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] text-white/30 hover:text-white/55 underline transition-colors">
-                      proof
-                    </a>
+                      className="text-[10px] text-white/30 hover:text-white/55 underline transition-colors">proof</a>
                   )}
                 </div>
                 <span className="text-base font-bold tabular-nums text-white/60">{entry.value}</span>
@@ -269,8 +757,9 @@ export default function LeaderboardPage() {
   );
 }
 
+// ─── SHARED SCREENS ───────────────────────────────────────────────────────────
+
 function LoadingScreen() {
-  const bebas2 = bebas;
   return (
     <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
       <ThreeBg />

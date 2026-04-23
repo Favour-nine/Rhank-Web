@@ -26,13 +26,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "You must be signed in to create a Rhank." }, { status: 401 });
   }
 
-  const { title, description, unit, direction, creator_name, latitude, longitude, location_name } = await req.json();
+  const { title, description, unit, direction, creator_name, latitude, longitude, location_name, type, join_mode } = await req.json();
 
-  if (!title || !unit || !direction || !creator_name) {
+  if (!title || !creator_name) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
-  if (!["high", "low"].includes(direction)) {
-    return NextResponse.json({ error: "Invalid direction." }, { status: 400 });
+  if (type === "score" && (!unit || !["high", "low"].includes(direction))) {
+    return NextResponse.json({ error: "Score Rhanks require a unit and direction." }, { status: 400 });
+  }
+  if (!["score", "token"].includes(type ?? "score")) {
+    return NextResponse.json({ error: "Invalid type." }, { status: 400 });
+  }
+  if (!["open", "request", "invite"].includes(join_mode ?? "open")) {
+    return NextResponse.json({ error: "Invalid join mode." }, { status: 400 });
   }
 
   const base = slugify(title);
@@ -44,11 +50,13 @@ export async function POST(req: NextRequest) {
     .insert({
       title,
       description: description || null,
-      unit,
-      direction,
+      unit: unit || null,
+      direction: direction || "high",
       creator_name,
       slug,
       user_id,
+      type: type || "score",
+      join_mode: join_mode || "open",
       latitude: latitude ?? null,
       longitude: longitude ?? null,
       location_name: location_name || null,
