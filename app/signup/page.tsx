@@ -24,6 +24,7 @@ function SignupForm() {
   const params = useSearchParams();
   const { user, loading } = useAuth();
   const [form, setForm] = useState({ email: "", password: "", name: "" });
+  const [gdprConsent, setGdprConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "confirm">("idle");
   const [error, setError] = useState("");
 
@@ -37,6 +38,7 @@ function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!gdprConsent) { setError("You must agree to the privacy policy to create an account."); return; }
     if (form.password.length < 8) { setError("Password must be at least 8 characters."); return; }
     setStatus("loading");
     setError("");
@@ -119,6 +121,20 @@ function SignupForm() {
               className={inputCls}
             />
           </Field>
+
+          {/* GDPR consent */}
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={gdprConsent}
+              onChange={(e) => setGdprConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 shrink-0 accent-[#ffe600]"
+            />
+            <span className="text-[11px] tracking-[0.12em] text-white/50 leading-relaxed">
+              I agree to the processing of my personal data (name, email, leaderboard activity) as described in the{" "}
+              <a href="/privacy" className="underline text-white/70 hover:text-white transition-colors">privacy policy</a>.
+            </span>
+          </label>
 
           {error && <p className="text-sm text-yellow-300">{error}</p>}
 

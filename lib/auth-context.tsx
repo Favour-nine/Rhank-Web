@@ -19,7 +19,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+      // If user logged in without "Remember me", sign them out when the
+      // browser is restarted (sessionStorage is cleared on close)
+      const sessionType = localStorage.getItem("rhank_session_type");
+      const sessionActive = sessionStorage.getItem("rhank_session_active");
+
+      if (data.session && sessionType === "session" && !sessionActive) {
+        supabase.auth.signOut().then(() => setSession(null));
+      } else {
+        setSession(data.session);
+      }
       setLoading(false);
     });
 
@@ -32,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("rhank_session_type");
+    sessionStorage.removeItem("rhank_session_active");
     setSession(null);
   };
 

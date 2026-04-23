@@ -24,6 +24,7 @@ function LoginForm() {
   const params = useSearchParams();
   const { user, loading } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(true);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
   const [view, setView] = useState<"login" | "reset">("login");
@@ -48,6 +49,15 @@ function LoginForm() {
       password: form.password,
     });
     if (error) { setError(error.message); setStatus("error"); return; }
+
+    if (rememberMe) {
+      localStorage.setItem("rhank_session_type", "persistent");
+      sessionStorage.removeItem("rhank_session_active");
+    } else {
+      localStorage.setItem("rhank_session_type", "session");
+      sessionStorage.setItem("rhank_session_active", "1");
+    }
+
     router.replace(redirectTo);
   };
 
@@ -157,6 +167,17 @@ function LoginForm() {
               className={inputCls}
             />
           </div>
+
+          {/* Remember me */}
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 accent-[#ffe600]"
+            />
+            <span className="text-[11px] tracking-[0.15em] uppercase text-white/50">Remember me</span>
+          </label>
 
           {error && <p className="text-sm text-yellow-300">{error}</p>}
 
