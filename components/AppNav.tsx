@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yellow" }) {
@@ -17,6 +18,18 @@ export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yello
   };
 
   const displayName = user?.user_metadata?.name || user?.email?.split("@")[0] || "Account";
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
     <header className={`sticky top-0 z-20 backdrop-blur-md ${yellow ? "bg-[#ffe600]" : "bg-[#1a5fff]/80"}`}>
@@ -58,21 +71,29 @@ export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yello
               )}
 
               {/* User avatar + dropdown */}
-              <div className="relative group">
-                <button className={`flex items-center gap-2 transition-colors ${yellow ? "text-black/60 hover:text-black" : "text-white/60 hover:text-white"}`}>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setOpen((v) => !v)}
+                  className={`flex items-center gap-2 transition-colors ${yellow ? "text-black/60 hover:text-black" : "text-white/60 hover:text-white"}`}
+                >
                   <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${yellow ? "bg-black text-[#ffe600]" : "bg-white text-[#1a5fff]"}`}>
                     {displayName.charAt(0).toUpperCase()}
                   </span>
                   <span className="hidden sm:inline text-[11px] tracking-[0.2em]">{displayName}</span>
                 </button>
-                <div className={`absolute right-0 top-full mt-2 w-44 border py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 z-30 ${yellow ? "bg-[#ffe600] border-black/15" : "bg-[#1450d8] border-white/15"}`}>
-                  <button
-                    onClick={handleSignOut}
-                    className={`w-full text-left px-4 py-2.5 text-[11px] tracking-[0.18em] uppercase transition-colors ${yellow ? "text-black/60 hover:text-black hover:bg-black/5" : "text-white/60 hover:text-white hover:bg-white/10"}`}
-                  >
-                    Sign out
-                  </button>
-                </div>
+                {open && (
+                  <div className={`absolute right-0 top-full mt-2 w-48 border py-1 z-30 ${yellow ? "bg-[#ffe600] border-black/15" : "bg-[#1450d8] border-white/15"}`}>
+                    <div className={`px-4 py-2 text-[10px] tracking-[0.18em] uppercase border-b mb-1 truncate ${yellow ? "text-black/30 border-black/10" : "text-white/30 border-white/10"}`}>
+                      {user?.email}
+                    </div>
+                    <button
+                      onClick={() => { setOpen(false); handleSignOut(); }}
+                      className={`w-full text-left px-4 py-2.5 text-[11px] tracking-[0.18em] uppercase transition-colors ${yellow ? "text-black/70 hover:text-black hover:bg-black/5" : "text-white/70 hover:text-white hover:bg-white/10"}`}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           ) : (
