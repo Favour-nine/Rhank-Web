@@ -46,6 +46,8 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
   const [pending, setPending] = useState<Member[]>([]);
   const [myMemberId, setMyMemberId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
 
   // Join form
   const [joinName, setJoinName] = useState("");
@@ -211,6 +213,18 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleClaim = async () => {
+    setClaiming(true);
+    const token = await getToken();
+    const res = await fetch(`/api/rhanks/${slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ claim: true }),
+    });
+    if (res.ok) setClaimed(true);
+    setClaiming(false);
+  };
+
   const unit = rhank.unit || "tokens";
   const isMember = !!myMemberId;
   const myMember = members.find((m) => m.id === myMemberId);
@@ -259,6 +273,20 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
           >
             {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
           </button>
+          {user && !rhank.user_id && !claimed && (
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              className="inline-flex items-center gap-2 border border-[#ffe600]/50 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-[#ffe600] hover:bg-[#ffe600]/10 disabled:opacity-50 transition-colors"
+            >
+              {claiming ? "Claiming…" : "Claim this Rhank"}
+            </button>
+          )}
+          {claimed && (
+            <span className="inline-flex items-center gap-2 text-sm text-green-400 font-semibold tracking-[0.18em] uppercase">
+              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed — reload to manage
+            </span>
+          )}
         </div>
 
         {/* My balance banner */}
@@ -589,6 +617,8 @@ function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
   const [editingDirection, setEditingDirection] = useState(false);
   const [savingDirection, setSavingDirection] = useState(false);
   const [newEntryId, setNewEntryId] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
 
   const fetchEntries = useCallback(async (highlightId?: string) => {
     const { data } = await supabase
@@ -633,6 +663,19 @@ function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleClaim = async () => {
+    setClaiming(true);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    const res = await fetch(`/api/rhanks/${slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ claim: true }),
+    });
+    if (res.ok) setClaimed(true);
+    setClaiming(false);
   };
 
   const top3 = entries.slice(0, 3);
@@ -710,6 +753,20 @@ function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
             className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
             {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
           </button>
+          {user && !rhank.user_id && !claimed && (
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              className="inline-flex items-center gap-2 border border-[#ffe600]/50 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-[#ffe600] hover:bg-[#ffe600]/10 disabled:opacity-50 transition-colors"
+            >
+              {claiming ? "Claiming…" : "Claim this Rhank"}
+            </button>
+          )}
+          {claimed && (
+            <span className="inline-flex items-center gap-2 text-sm text-green-400 font-semibold tracking-[0.18em] uppercase">
+              <span className="w-2 h-2 rounded-full bg-green-400" /> Claimed — reload to manage
+            </span>
+          )}
         </div>
 
         {/* Empty */}
