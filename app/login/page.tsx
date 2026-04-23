@@ -26,10 +26,13 @@ function LoginForm() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
+  const [view, setView] = useState<"login" | "reset">("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [resetError, setResetError] = useState("");
 
   const redirectTo = params.get("next") ?? "/rhanks";
 
-  // Already signed in → redirect
   useEffect(() => {
     if (!loading && user) router.replace(redirectTo);
   }, [user, loading, redirectTo, router]);
@@ -47,6 +50,69 @@ function LoginForm() {
     if (error) { setError(error.message); setStatus("error"); return; }
     router.replace(redirectTo);
   };
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetStatus("loading");
+    setResetError("");
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) { setResetError(error.message); setResetStatus("error"); return; }
+    setResetStatus("sent");
+  };
+
+  if (view === "reset") {
+    return (
+      <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
+        <ThreeBg />
+        <AppNav />
+        <section className="mx-auto max-w-md px-6 pt-20 pb-24 md:pt-32">
+          <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/50 mb-3">Password reset</p>
+          <h1 className={`${bebas.className} text-6xl md:text-7xl leading-none mb-4`}>Forgot?</h1>
+          <p className="text-white/40 text-sm mb-10">Enter your email and we'll send you a reset link.</p>
+
+          {resetStatus === "sent" ? (
+            <div className="border border-white/20 bg-white/5 px-5 py-6 text-center">
+              <p className="text-sm text-white/80 mb-1">Check your inbox.</p>
+              <p className="text-[11px] text-white/40">A reset link was sent to <span className="text-white/70">{resetEmail}</span></p>
+              <button onClick={() => setView("login")} className="mt-6 text-[11px] tracking-[0.18em] uppercase text-white/40 hover:text-white underline transition-colors">
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleReset} className="space-y-5">
+              <Field label="Email">
+                <input
+                  required
+                  type="email"
+                  autoComplete="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputCls}
+                />
+              </Field>
+
+              {resetError && <p className="text-sm text-yellow-300">{resetError}</p>}
+
+              <button
+                type="submit"
+                disabled={resetStatus === "loading"}
+                className="w-full bg-white px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-[#1a5fff] hover:bg-white/90 disabled:opacity-50 transition-colors"
+              >
+                {resetStatus === "loading" ? "Sending…" : "Send reset link →"}
+              </button>
+
+              <button type="button" onClick={() => setView("login")} className="w-full text-center text-[11px] tracking-[0.18em] uppercase text-white/30 hover:text-white/60 transition-colors">
+                Back to sign in
+              </button>
+            </form>
+          )}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen text-white" style={{ backgroundColor: "#1a5fff" }}>
@@ -70,7 +136,17 @@ function LoginForm() {
             />
           </Field>
 
-          <Field label="Password">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Password</label>
+              <button
+                type="button"
+                onClick={() => { setResetEmail(form.email); setView("reset"); }}
+                className="text-[10px] tracking-[0.15em] uppercase text-white/30 hover:text-white/60 transition-colors underline"
+              >
+                Forgot password?
+              </button>
+            </div>
             <input
               required
               type="password"
@@ -80,7 +156,7 @@ function LoginForm() {
               placeholder="••••••••"
               className={inputCls}
             />
-          </Field>
+          </div>
 
           {error && <p className="text-sm text-yellow-300">{error}</p>}
 
