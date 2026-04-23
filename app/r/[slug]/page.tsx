@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
-import { supabase, type Rhank, type Entry, type Member } from "@/lib/supabase";
+import { supabase, type Rhank, type Entry, type Member, type TokenTransaction } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
@@ -48,6 +48,9 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
   const [copied, setCopied] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [showClaimPicker, setShowClaimPicker] = useState(false);
+  const [history, setHistory] = useState<TokenTransaction[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Join form
   const [joinName, setJoinName] = useState("");
@@ -79,14 +82,30 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
   useEffect(() => {
     fetchMembers();
     const stored = localStorage.getItem(`rhank_member_${slug}`);
-    if (stored) setMyMemberId(stored);
+    if (stored) { setMyMemberId(stored); loadHistory(stored); }
+
+    // Also check if logged-in user already has a linked member record
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session?.user) return;
+      const { data: linked } = await supabase
+        .from("members")
+        .select("id")
+        .eq("rhank_id", rhank.id)
+        .eq("user_id", data.session.user.id)
+        .maybeSingle();
+      if (linked && !localStorage.getItem(`rhank_member_${slug}`)) {
+        localStorage.setItem(`rhank_member_${slug}`, linked.id);
+        setMyMemberId(linked.id);
+        loadHistory(linked.id);
+      }
+    });
 
     const channel = supabase
       .channel(`members-${slug}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, fetchMembers)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [slug, fetchMembers]);
+  }, [slug, fetchMembers, rhank.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getToken = async () => {
     const { data } = await supabase.auth.getSession();
@@ -112,6 +131,34 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
     } else {
       setJoinStatus("idle");
     }
+  };
+
+  const handleClaimSpot = async (memberId: string) => {
+    setClaiming(true);
+    const token = await getToken();
+    const res = await fetch(`/api/rhanks/${slug}/members/${memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ claim: true }),
+    });
+    if (res.ok) {
+      localStorage.setItem(`rhank_member_${slug}`, memberId);
+      setMyMemberId(memberId);
+      setShowClaimPicker(false);
+      setClaimed(true);
+      fetchMembers();
+      loadHistory(memberId);
+    }
+    setClaiming(false);
+  };
+
+  const loadHistory = async (memberId: string) => {
+    const { data } = await supabase
+      .from("token_transactions")
+      .select("*")
+      .eq("member_id", memberId)
+      .order("created_at", { ascending: false });
+    setHistory((data ?? []) as TokenTransaction[]);
   };
 
   const handleApprove = async (memberId: string, status: "active" | "rejected") => {
@@ -291,17 +338,80 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
 
         {/* My balance banner */}
         {myMember && (
-          <div className="border border-[#ffe600]/40 bg-[#ffe600]/10 px-5 py-4 flex items-center justify-between mb-6">
-            <div>
-              <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#ffe600]/70">Your balance</p>
-              <p className="font-bold text-lg">{myMember.name}</p>
+          <div className="border border-[#ffe600]/40 bg-[#ffe600]/10 mb-6">
+            <div className="px-5 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#ffe600]/70">Your balance</p>
+                <p className="font-bold text-lg">{myMember.name}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className={`${bebas.className} text-4xl ${myMember.balance >= 0 ? "text-[#ffe600]" : "text-red-400"}`}>
+                    {myMember.balance > 0 ? "+" : ""}{myMember.balance}
+                  </p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest">{unit}</p>
+                </div>
+                <button
+                  onClick={() => { setShowHistory((v) => !v); if (!showHistory && myMemberId) loadHistory(myMemberId); }}
+                  className="text-[10px] tracking-[0.18em] uppercase text-[#ffe600]/50 hover:text-[#ffe600] underline transition-colors"
+                >
+                  {showHistory ? "Hide" : "History"}
+                </button>
+              </div>
             </div>
-            <div className="text-right">
-              <p className={`${bebas.className} text-4xl ${myMember.balance >= 0 ? "text-[#ffe600]" : "text-red-400"}`}>
-                {myMember.balance > 0 ? "+" : ""}{myMember.balance}
-              </p>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest">{unit}</p>
-            </div>
+            {showHistory && (
+              <div className="border-t border-[#ffe600]/20 divide-y divide-white/5 max-h-64 overflow-y-auto">
+                {history.length === 0 ? (
+                  <p className="px-5 py-4 text-sm text-white/30">No transactions yet.</p>
+                ) : history.map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between px-5 py-3 gap-4">
+                    <div>
+                      <p className="text-[10px] text-white/30 mb-0.5">
+                        {new Date(tx.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                      <p className="text-sm text-white/70">{tx.reason || "No reason given"}</p>
+                    </div>
+                    <span className={`text-base font-bold tabular-nums shrink-0 ${tx.amount >= 0 ? "text-[#ffe600]" : "text-red-400"}`}>
+                      {tx.amount > 0 ? "+" : ""}{tx.amount} {unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Claim your spot — for logged-in users not yet linked to a member */}
+        {user && !myMemberId && !isOwner && members.some((m) => !m.user_id) && (
+          <div className="border border-white/15 bg-white/5 px-5 py-5 mb-6">
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">Already on this board?</p>
+            <p className="text-[11px] text-white/30 mb-4">If your name is listed, claim your spot to track your balance and history.</p>
+            {!showClaimPicker ? (
+              <button
+                onClick={() => setShowClaimPicker(true)}
+                className="text-[11px] tracking-[0.18em] uppercase text-white border border-white/25 px-5 py-2.5 hover:bg-white/10 transition-colors"
+              >
+                Claim your spot →
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[10px] tracking-[0.15em] uppercase text-white/30 mb-2">Select your name:</p>
+                {members.filter((m) => !m.user_id).map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => handleClaimSpot(m.id)}
+                    disabled={claiming}
+                    className="w-full flex items-center justify-between border border-white/15 px-4 py-3 hover:border-[#ffe600]/50 hover:bg-[#ffe600]/5 transition-colors disabled:opacity-50 text-left"
+                  >
+                    <span className="text-sm font-medium text-white/80">{m.name}</span>
+                    <span className={`text-sm font-bold tabular-nums ${m.balance >= 0 ? "text-white/40" : "text-red-400"}`}>
+                      {m.balance > 0 ? "+" : ""}{m.balance} {unit}
+                    </span>
+                  </button>
+                ))}
+                <button onClick={() => setShowClaimPicker(false)} className="text-[10px] text-white/20 hover:text-white/50 transition-colors">Cancel</button>
+              </div>
+            )}
           </div>
         )}
 

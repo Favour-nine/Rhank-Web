@@ -14,7 +14,8 @@ const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 export default function MyRhanksPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [rhanks, setRhanks] = useState<Rhank[]>([]);
+  const [owned, setOwned] = useState<Rhank[]>([]);
+  const [memberOf, setMemberOf] = useState<{ rhank: Rhank; balance: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,15 +24,19 @@ export default function MyRhanksPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("rhanks")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setRhanks((data ?? []) as Rhank[]);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase.from("rhanks").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("members").select("*, rhanks(*)").eq("user_id", user.id).eq("status", "active"),
+    ]).then(([{ data: ownedData }, { data: memberData }]) => {
+      setOwned((ownedData ?? []) as Rhank[]);
+      const memberships = (memberData ?? []).map((m: { balance: number; name: string; rhanks: Rhank }) => ({
+        rhank: m.rhanks,
+        balance: m.balance,
+        name: m.name,
+      }));
+      setMemberOf(memberships);
+      setLoading(false);
+    });
   }, [user]);
 
   return (
@@ -50,54 +55,89 @@ export default function MyRhanksPage() {
                 style={{ animation: `loadDot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
             ))}
           </div>
-        ) : rhanks.length === 0 ? (
-          <div className="border border-white/10 bg-white/5 px-8 py-16 text-center">
-            <p className={`${bebas.className} text-4xl text-white/20 mb-3`}>No Rhanks yet.</p>
-            <p className="text-white/30 text-sm mb-6">Create your first leaderboard to get started.</p>
-            <Link href="/rhanks/new"
-              className="inline-flex items-center bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors">
-              Create a Rhank →
-            </Link>
-          </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {rhanks.map((r) => (
-                <Link key={r.id} href={`/r/${r.slug}`}
-                  className="group border border-white/10 bg-white/5 p-5 hover:border-white/30 hover:bg-white/10 transition-all">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
-                      {r.type === "token" ? "🪙 Token" : "🏆 Score"}
-                    </span>
-                    <span className="text-[10px] tracking-[0.15em] uppercase text-white/20">
-                      {r.join_mode}
-                    </span>
-                  </div>
-                  <p className={`${bebas.className} text-2xl leading-tight mb-2 group-hover:text-[#ffe600] transition-colors`}>
-                    {r.title}
-                  </p>
-                  {r.description && (
-                    <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2 mb-3">{r.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    {r.location_name && (
-                      <span className="text-[10px] text-white/25">📍 {r.location_name}</span>
-                    )}
-                    <span className="text-[10px] text-white/30 ml-auto">
-                      {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+          <div className="space-y-12">
+            {/* Owned */}
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/30 mb-4">Rhanks you created</p>
+              {owned.length === 0 ? (
+                <div className="border border-white/10 bg-white/5 px-8 py-12 text-center">
+                  <p className="text-white/30 text-sm mb-4">No Rhanks created yet.</p>
+                  <Link href="/rhanks/new"
+                    className="inline-flex items-center bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors">
+                    Create a Rhank →
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {owned.map((r) => (
+                    <RhankCard key={r.id} rhank={r} />
+                  ))}
+                </div>
+              )}
+              {owned.length > 0 && (
+                <div className="mt-4">
+                  <Link href="/rhanks/new"
+                    className="inline-flex items-center bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors">
+                    + Create another
+                  </Link>
+                </div>
+              )}
             </div>
 
-            <Link href="/rhanks/new"
-              className="inline-flex items-center bg-[#ffe600] px-6 py-3 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 transition-colors">
-              + Create another
-            </Link>
-          </>
+            {/* Member of */}
+            {memberOf.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/30 mb-4">Rhanks you&apos;re on</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {memberOf.map(({ rhank: r, balance, name }) => (
+                    <Link key={r.id} href={`/r/${r.slug}`}
+                      className="group border border-white/10 bg-white/5 p-5 hover:border-white/30 hover:bg-white/10 transition-all">
+                      <p className={`${bebas.className} text-2xl leading-tight mb-1 group-hover:text-[#ffe600] transition-colors`}>
+                        {r.title}
+                      </p>
+                      <p className="text-[11px] text-white/40 mb-3">{name}</p>
+                      <div className="flex items-center justify-between">
+                        <span className={`${bebas.className} text-2xl ${balance >= 0 ? "text-[#ffe600]" : "text-red-400"}`}>
+                          {balance > 0 ? "+" : ""}{balance}
+                          <span className="text-sm ml-1 font-sans font-normal opacity-60">{r.unit || "tokens"}</span>
+                        </span>
+                        <span className="text-[10px] tracking-[0.15em] uppercase text-white/20">{r.type === "token" ? "🪙" : "🏆"}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </section>
     </main>
+  );
+}
+
+function RhankCard({ rhank: r }: { rhank: Rhank }) {
+  return (
+    <Link href={`/r/${r.slug}`}
+      className="group border border-white/10 bg-white/5 p-5 hover:border-white/30 hover:bg-white/10 transition-all">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
+          {r.type === "token" ? "🪙 Token" : "🏆 Score"}
+        </span>
+        <span className="text-[10px] tracking-[0.15em] uppercase text-white/20">{r.join_mode}</span>
+      </div>
+      <p className={`${bebas.className} text-2xl leading-tight mb-2 group-hover:text-[#ffe600] transition-colors`}>
+        {r.title}
+      </p>
+      {r.description && (
+        <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2 mb-3">{r.description}</p>
+      )}
+      <div className="flex items-center justify-between">
+        {r.location_name && <span className="text-[10px] text-white/25">📍 {r.location_name}</span>}
+        <span className="text-[10px] text-white/30 ml-auto">
+          {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+        </span>
+      </div>
+    </Link>
   );
 }
