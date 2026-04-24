@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bebas_Neue } from "next/font/google";
@@ -71,7 +71,7 @@ export default function MyRhanksPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {owned.map((r) => (
-                    <RhankCard key={r.id} rhank={r} />
+                    <RhankCard key={r.id} rhank={r} onDelete={() => setOwned((prev) => prev.filter((x) => x.id !== r.id))} />
                   ))}
                 </div>
               )}
@@ -116,7 +116,31 @@ export default function MyRhanksPage() {
   );
 }
 
-function RhankCard({ rhank: r }: { rhank: Rhank }) {
+function RhankCard({ rhank: r, onDelete }: { rhank: Rhank; onDelete: () => void }) {
+  const [confirm, setConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const confirmRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!confirm) return;
+    function handleClick(e: MouseEvent) {
+      if (confirmRef.current && !confirmRef.current.contains(e.target as Node)) setConfirm(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [confirm]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    await fetch(`/api/rhanks/${r.slug}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    onDelete();
+  };
+
   return (
     <div className="group border border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10 transition-all flex flex-col">
       <Link href={`/r/${r.slug}`} className="p-5 flex-1">
@@ -139,16 +163,44 @@ function RhankCard({ rhank: r }: { rhank: Rhank }) {
           </span>
         </div>
       </Link>
-      <div className="border-t border-white/10 flex">
-        <Link href={`/r/${r.slug}/edit`}
-          className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors">
-          Edit
-        </Link>
-        <Link href={`/r/${r.slug}`}
-          className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors border-l border-white/10">
-          View
-        </Link>
-      </div>
+
+      {confirm ? (
+        <div ref={confirmRef} className="border-t border-red-500/30 bg-red-500/10 px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-[11px] text-red-300">Delete this Rhank?</span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-[11px] font-bold tracking-[0.15em] uppercase text-white bg-red-500 px-3 py-1.5 hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {deleting ? "Deleting..." : "Yes, delete"}
+            </button>
+            <button
+              onClick={() => setConfirm(false)}
+              className="text-[11px] tracking-[0.15em] uppercase text-white/40 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="border-t border-white/10 flex">
+          <Link href={`/r/${r.slug}/edit`}
+            className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+            Edit
+          </Link>
+          <Link href={`/r/${r.slug}`}
+            className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors border-l border-white/10">
+            View
+          </Link>
+          <button
+            onClick={() => setConfirm(true)}
+            className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-red-400/50 hover:text-red-400 hover:bg-red-500/10 transition-colors border-l border-white/10"
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
