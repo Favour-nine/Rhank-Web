@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // POST — join or request to join (or owner-add, always active)
 export async function POST(req: NextRequest, { params }: Params) {
   const { slug } = await params;
-  const { name, owner_add } = await req.json();
+  const { name, owner_add, invite_token } = await req.json();
 
   if (!name?.trim()) return NextResponse.json({ error: "Name is required." }, { status: 400 });
 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: rhank } = await supabase
     .from("rhanks")
-    .select("id, join_mode, user_id")
+    .select("id, join_mode, user_id, invite_token")
     .eq("slug", slug)
     .single();
 
@@ -47,11 +47,13 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const isOwner = callerId && rhank.user_id === callerId;
 
-  // Owner-add always active; open join = active; request/invite = pending
+  // Owner-add always active; open join = active; valid invite token = active; request/invite = pending
   let status: "active" | "pending";
   if (isOwner && owner_add) {
     status = "active";
   } else if (rhank.join_mode === "open") {
+    status = "active";
+  } else if (invite_token && rhank.invite_token && invite_token === rhank.invite_token) {
     status = "active";
   } else {
     status = "pending";

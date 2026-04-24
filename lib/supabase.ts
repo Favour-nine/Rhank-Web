@@ -16,6 +16,7 @@ export type Rhank = {
   user_id: string | null;
   type: "score" | "token";
   join_mode: "open" | "request" | "invite";
+  invite_token: string | null;
   created_at: string;
   latitude: number | null;
   longitude: number | null;
@@ -48,5 +49,6 @@ export type Entry = {
   participant_name: string;
   value: number;
   proof_url: string | null;
+  user_id: string | null;
   created_at: string;
 };

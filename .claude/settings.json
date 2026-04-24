@@ -3,7 +3,14 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(ls -lh \"c:\\\\Users\\\\jerom\\\\OneDrive\\\\Desktop\\\\Rhank\\\\rhank-web\\\\public\"/*.obj)",
-      "Bash(dir \"c:\\\\Users\\\\jerom\\\\OneDrive\\\\Desktop\\\\Rhank\\\\rhank-web\\\\public\")"
+      "Bash(dir \"c:\\\\Users\\\\jerom\\\\OneDrive\\\\Desktop\\\\Rhank\\\\rhank-web\\\\public\")",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(cmdkey /delete:LegacyGeneric:target=git:https://github.com)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\jerom\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-jerom-OneDrive-Desktop-Rhank-rhank-web\\\\a537f0dd-9a38-4f2c-80f6-9ed3c9e481d7\\\\tasks\\\\bi2wzs60t.output\" -Wait -Tail 20)",
+      "Bash(git config *)"
     ]
   }
 }

@@ -93,6 +93,13 @@ export default function AppNav({ variant = "blue" }: { variant?: "blue" | "yello
                     >
                       My Rhanks
                     </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setOpen(false)}
+                      className={`block w-full px-4 py-2.5 text-[11px] tracking-[0.18em] uppercase transition-colors ${yellow ? "text-black/70 hover:text-black hover:bg-black/5" : "text-white/70 hover:text-white hover:bg-white/10"}`}
+                    >
+                      Account settings
+                    </Link>
                     <button
                       onClick={() => { setOpen(false); handleSignOut(); }}
                       className={`w-full text-left px-4 py-2.5 text-[11px] tracking-[0.18em] uppercase transition-colors ${yellow ? "text-black/70 hover:text-black hover:bg-black/5" : "text-white/70 hover:text-white hover:bg-white/10"}`}
