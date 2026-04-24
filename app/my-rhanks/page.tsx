@@ -118,26 +118,37 @@ export default function MyRhanksPage() {
 
 function RhankCard({ rhank: r }: { rhank: Rhank }) {
   return (
-    <Link href={`/r/${r.slug}`}
-      className="group border border-white/10 bg-white/5 p-5 hover:border-white/30 hover:bg-white/10 transition-all">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
-          {r.type === "token" ? "🪙 Token" : "🏆 Score"}
-        </span>
-        <span className="text-[10px] tracking-[0.15em] uppercase text-white/20">{r.join_mode}</span>
+    <div className="group border border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10 transition-all flex flex-col">
+      <Link href={`/r/${r.slug}`} className="p-5 flex-1">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
+            {r.type === "token" ? "🪙 Token" : "🏆 Score"}
+          </span>
+          <span className="text-[10px] tracking-[0.15em] uppercase text-white/20">{r.join_mode}</span>
+        </div>
+        <p className={`${bebas.className} text-2xl leading-tight mb-2 group-hover:text-[#ffe600] transition-colors`}>
+          {r.title}
+        </p>
+        {r.description && (
+          <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2 mb-3">{r.description}</p>
+        )}
+        <div className="flex items-center justify-between">
+          {r.location_name && <span className="text-[10px] text-white/25">📍 {r.location_name}</span>}
+          <span className="text-[10px] text-white/30 ml-auto">
+            {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
+        </div>
+      </Link>
+      <div className="border-t border-white/10 flex">
+        <Link href={`/r/${r.slug}/edit`}
+          className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+          Edit
+        </Link>
+        <Link href={`/r/${r.slug}`}
+          className="flex-1 text-center py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/40 hover:text-white hover:bg-white/5 transition-colors border-l border-white/10">
+          View
+        </Link>
       </div>
-      <p className={`${bebas.className} text-2xl leading-tight mb-2 group-hover:text-[#ffe600] transition-colors`}>
-        {r.title}
-      </p>
-      {r.description && (
-        <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2 mb-3">{r.description}</p>
-      )}
-      <div className="flex items-center justify-between">
-        {r.location_name && <span className="text-[10px] text-white/25">📍 {r.location_name}</span>}
-        <span className="text-[10px] text-white/30 ml-auto">
-          {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-        </span>
-      </div>
-    </Link>
+    </div>
   );
 }

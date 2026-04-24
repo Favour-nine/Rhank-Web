@@ -320,6 +320,12 @@ function TokenLeaderboard({ slug, rhank, isOwner, user }: {
           >
             {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
           </button>
+          {isOwner && (
+            <Link href={`/r/${slug}/edit`}
+              className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
+              Edit
+            </Link>
+          )}
           {user && !rhank.user_id && !claimed && (
             <button
               onClick={handleClaim}
@@ -863,6 +869,12 @@ function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
             className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
             {copied ? <><span className="w-2 h-2 rounded-full bg-green-400" /> Copied!</> : "Share link"}
           </button>
+          {isOwner && (
+            <Link href={`/r/${slug}/edit`}
+              className="inline-flex items-center gap-2 border border-white/25 px-6 py-3 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors">
+              Edit
+            </Link>
+          )}
           {user && !rhank.user_id && !claimed && (
             <button
               onClick={handleClaim}
