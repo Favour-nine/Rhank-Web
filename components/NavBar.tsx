@@ -106,7 +106,7 @@ export default function NavBar() {
   const close = () => setOpen(false);
 
   const bgClass = bg === "white" ? "bg-white/95" : bg === "yellow" ? "bg-[#ffe600]" : "bg-[#1a5fff]/80";
-  const textClass = bg === "blue" ? "text-white/60" : "text-black/50";
+  const textClass = bg === "blue" ? "text-white/80" : "text-black/70";
   const hoverClass = bg === "blue" ? "hover:text-white" : "hover:text-black";
   const ctaClass = bg === "blue"
     ? "border-white/20 text-white hover:bg-white hover:text-[#1a5fff]"

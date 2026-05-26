@@ -66,7 +66,7 @@ export default function Home() {
           </FadeUp>
 
           <FadeUp delay={150}>
-            <p className="mt-8 max-w-lg text-base leading-relaxed text-white/75 md:text-lg">
+            <p className="mt-8 max-w-lg text-base leading-relaxed text-white/90 md:text-lg">
               Create a public leaderboard for literally anything. The tallest, the fastest,
               the most loyal. Set the rules, people enter, the board ranks them live.
               Reach #1 and earn Rhank tokens.
@@ -116,7 +116,7 @@ export default function Home() {
             <FadeUp>
               <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-black/50 mb-3">Why Rhank</p>
               <h2 className={`${bebas.className} text-6xl md:text-7xl text-black`}>Leaderboards for everyone.</h2>
-              <p className="mt-6 max-w-2xl text-black/70 leading-relaxed text-lg">
+              <p className="mt-6 max-w-2xl text-black/80 leading-relaxed text-lg">
                 Leaderboards exist everywhere: sports, games, business. But they're always built
                 for institutions. Rhank puts that power in anyone's hands. A teacher, a coffee shop,
                 a friend group. If there's a comparison to be made, there's a Rhank for it.
@@ -261,7 +261,7 @@ function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="bg-[#1450d8]/60 backdrop-blur p-8">
       <div className="text-xs font-bold tracking-[0.18em] uppercase text-white/90 mb-3">{title}</div>
-      <div className="text-sm leading-relaxed text-white/60">{desc}</div>
+      <div className="text-sm leading-relaxed text-white/80">{desc}</div>
     </div>
   );
 }
@@ -271,7 +271,7 @@ function StepCard({ num, title, body }: { num: string; title: string; body: stri
     <div className="p-8 border-r border-black/10 last:border-r-0">
       <div className={`${bebas.className} text-5xl text-black/10 mb-4`}>{num}</div>
       <div className="text-base font-semibold text-black mb-2">{title}</div>
-      <div className="text-sm leading-relaxed text-black/55">{body}</div>
+      <div className="text-sm leading-relaxed text-black/70">{body}</div>
     </div>
   );
 }
@@ -280,7 +280,7 @@ function FaqCard({ q, a }: { q: string; a: string }) {
   return (
     <div className="bg-white p-8">
       <div className="font-semibold text-black mb-2">{q}</div>
-      <div className="text-sm text-black/55 leading-relaxed">{a}</div>
+      <div className="text-sm text-black/70 leading-relaxed">{a}</div>
     </div>
   );
 }
