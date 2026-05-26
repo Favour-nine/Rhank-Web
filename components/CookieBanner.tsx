@@ -6,6 +6,7 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (window.self !== window.top) return; // don't show inside iframes
     if (!localStorage.getItem("rhank_cookie_consent")) setVisible(true);
   }, []);
 
