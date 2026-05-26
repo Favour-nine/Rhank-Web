@@ -20,7 +20,7 @@ type ShapeData = {
   driftZ: number;
 };
 
-export default function ThreeBg({ onReady, bgColor = 0x1a5fff }: { onReady?: () => void; bgColor?: number }) {
+export default function ThreeBg({ onReady, bgColor = 0x1a5fff, gradientOverlay = true }: { onReady?: () => void; bgColor?: number; gradientOverlay?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -158,5 +158,20 @@ export default function ThreeBg({ onReady, bgColor = 0x1a5fff }: { onReady?: () 
     };
   }, []);
 
-  return <canvas ref={canvasRef} id="bg" className="fixed inset-0 -z-10 h-full w-full" />;
+  return (
+    <>
+      <canvas ref={canvasRef} id="bg" className="fixed inset-0 -z-10 h-full w-full" />
+      {gradientOverlay && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            zIndex: 9999,
+            background: "linear-gradient(90deg, rgb(160, 224, 171), rgb(255, 172, 46) 50%, rgb(165, 45, 37))",
+            mixBlendMode: "screen",
+            opacity: 0.45,
+          }}
+        />
+      )}
+    </>
+  );
 }

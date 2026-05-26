@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { fireWebhooks } from "@/lib/fireWebhooks";
 
 export async function POST(
   req: NextRequest,
@@ -28,13 +29,15 @@ export async function POST(
 
   const { data: rhank, error: rhankErr } = await supabase
     .from("rhanks")
-    .select("id")
+    .select("id, moderation_enabled")
     .eq("slug", slug)
     .single();
 
   if (rhankErr || !rhank) {
     return NextResponse.json({ error: "Rhank not found." }, { status: 404 });
   }
+
+  const entryStatus = rhank.moderation_enabled ? "pending" : "approved";
 
   const { data, error } = await supabase
     .from("entries")
@@ -44,6 +47,7 @@ export async function POST(
       value: num,
       proof_url: proof_url || null,
       user_id,
+      status: entryStatus,
     })
     .select()
     .single();
@@ -51,6 +55,9 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Fire webhooks asynchronously — don't await to keep response fast
+  fireWebhooks(rhank.id, "entry.created", { entry: data }).catch(() => null);
 
   return NextResponse.json(data, { status: 201 });
 }

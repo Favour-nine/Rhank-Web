@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { fireWebhooks } from "@/lib/fireWebhooks";
+import { notifyMemberOfDecision } from "@/lib/email";
 
 type Params = { params: Promise<{ slug: string; memberId: string }> };
 
@@ -8,7 +10,7 @@ const getCallerAndRhank = async (req: NextRequest, slug: string) => {
   if (!token) return { error: "Unauthorized.", status: 401 };
   const { data: userData } = await supabase.auth.getUser(token);
   if (!userData.user) return { error: "Unauthorized.", status: 401 };
-  const { data: rhank } = await supabase.from("rhanks").select("user_id").eq("slug", slug).single();
+  const { data: rhank } = await supabase.from("rhanks").select("id, title, user_id").eq("slug", slug).single();
   if (!rhank) return { error: "Not found.", status: 404 };
   return { user: userData.user, rhank, token };
 };
@@ -54,6 +56,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = `${proto}://${host}`;
+
+  if (status === "active") {
+    fireWebhooks(rhank.id, "member.approved", { member: data }).catch(() => null);
+    if (data.user_id) {
+      notifyMemberOfDecision(data.user_id, rhank.title, slug, true, baseUrl).catch(() => null);
+    }
+  } else if (status === "rejected" && data.user_id) {
+    notifyMemberOfDecision(data.user_id, rhank.title, slug, false, baseUrl).catch(() => null);
+  }
+
   return NextResponse.json(data);
 }
 

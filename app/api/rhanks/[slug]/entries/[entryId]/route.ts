@@ -39,5 +39,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ ok: true });
   }
 
+  // Owner: approve or reject a pending entry
+  if (body.status && ["approved", "rejected"].includes(body.status)) {
+    const { data: rhank } = await supabase.from("rhanks").select("id, user_id").eq("slug", slug).single();
+    if (!rhank) return NextResponse.json({ error: "Not found." }, { status: 404 });
+    if (rhank.user_id !== userData.user.id) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+
+    const { error } = await supabase.from("entries").update({ status: body.status }).eq("id", entryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });
 }

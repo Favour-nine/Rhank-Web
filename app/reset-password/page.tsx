@@ -6,6 +6,7 @@ import { Bebas_Neue } from "next/font/google";
 import { supabase } from "@/lib/supabase";
 import ThreeBg from "@/components/ThreeBg";
 import AppNav from "@/components/AppNav";
+import { INPUT_CLS } from "@/lib/ui";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
@@ -100,5 +101,4 @@ export default function ResetPasswordPage() {
   );
 }
 
-const inputCls =
-  "w-full border border-white/20 bg-white/10 backdrop-blur px-4 py-3 text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors";
+const inputCls = INPUT_CLS;

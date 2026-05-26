@@ -7,6 +7,8 @@ import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { INPUT_CLS, BTN_PRIMARY } from "@/lib/ui";
+import Field from "@/components/Field";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
@@ -258,7 +260,7 @@ export default function NewRhankPage() {
           <button
             type="submit"
             disabled={status === "loading"}
-            className="w-full bg-[#ffe600] px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors"
+            className={`w-full ${BTN_PRIMARY}`}
           >
             {status === "loading" ? "Creating…" : "Create Rhank →"}
           </button>
@@ -268,14 +270,5 @@ export default function NewRhankPage() {
   );
 }
 
-const inputCls = "w-full border border-white/20 bg-white/10 backdrop-blur px-4 py-3 text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors";
+const inputCls = INPUT_CLS;
 
-function Field({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">{label}</label>
-      <p className="text-[11px] text-white/35 mb-2">{hint}</p>
-      {children}
-    </div>
-  );
-}

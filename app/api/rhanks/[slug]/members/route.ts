@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { notifyOwnerOfJoinRequest } from "@/lib/email";
+import { fireWebhooks } from "@/lib/fireWebhooks";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: rhank } = await supabase
     .from("rhanks")
-    .select("id, join_mode, user_id, invite_token")
+    .select("id, title, join_mode, user_id, invite_token")
     .eq("slug", slug)
     .single();
 
@@ -69,6 +71,18 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Fire webhook for direct joins (active status)
+  if (status === "active") {
+    fireWebhooks(rhank.id, "member.joined", { member: data }).catch(() => null);
+  }
+
+  // Notify owner of pending join request
+  if (status === "pending" && rhank.user_id) {
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    notifyOwnerOfJoinRequest(rhank.user_id, rhank.title, slug, name.trim(), `${proto}://${host}`).catch(() => null);
+  }
 
   return NextResponse.json({ member: data, status }, { status: 201 });
 }

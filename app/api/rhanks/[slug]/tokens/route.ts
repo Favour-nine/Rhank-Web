@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { notifyMemberOfTokenAward } from "@/lib/email";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: userData } = await supabase.auth.getUser(token);
   if (!userData.user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  const { data: rhank } = await supabase.from("rhanks").select("id, user_id").eq("slug", slug).single();
+  const { data: rhank } = await supabase.from("rhanks").select("id, title, unit, user_id").eq("slug", slug).single();
   if (!rhank || rhank.user_id !== userData.user.id) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
@@ -35,10 +36,18 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (txErr) return NextResponse.json({ error: txErr.message }, { status: 500 });
 
   // Update member balance
-  const { data: member } = await supabase.from("members").select("balance").eq("id", member_id).single();
+  const { data: member } = await supabase.from("members").select("balance, user_id").eq("id", member_id).single();
   const newBalance = (member?.balance ?? 0) + Number(amount);
 
   await supabase.from("members").update({ balance: newBalance }).eq("id", member_id);
+
+  // Notify member if they have a linked account
+  if (member?.user_id) {
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const unit = rhank.unit || "tokens";
+    notifyMemberOfTokenAward(member.user_id, rhank.title, slug, Number(amount), unit, reason || null, newBalance, `${proto}://${host}`).catch(() => null);
+  }
 
   return NextResponse.json({ transaction: tx, new_balance: newBalance }, { status: 201 });
 }

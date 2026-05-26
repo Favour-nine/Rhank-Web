@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import ThreeBg from "@/components/ThreeBg";
 import AppNav from "@/components/AppNav";
+import { INPUT_CLS } from "@/lib/ui";
+import Field from "@/components/Field";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
@@ -201,14 +203,5 @@ function LoginForm() {
   );
 }
 
-const inputCls =
-  "w-full border border-white/20 bg-white/10 backdrop-blur px-4 py-3 text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors";
+const inputCls = INPUT_CLS;
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60 mb-2 block">{label}</label>
-      {children}
-    </div>
-  );
-}

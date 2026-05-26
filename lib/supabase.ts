@@ -21,6 +21,9 @@ export type Rhank = {
   latitude: number | null;
   longitude: number | null;
   location_name: string | null;
+  reset_schedule: "weekly" | "monthly" | null;
+  last_reset_at: string | null;
+  moderation_enabled: boolean;
 };
 
 export type Member = {
@@ -30,6 +33,15 @@ export type Member = {
   name: string;
   status: "pending" | "active" | "rejected";
   balance: number;
+  team_id: string | null;
+  created_at: string;
+};
+
+export type Team = {
+  id: string;
+  rhank_id: string;
+  name: string;
+  color: string;
   created_at: string;
 };
 
@@ -50,5 +62,30 @@ export type Entry = {
   value: number;
   proof_url: string | null;
   user_id: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+};
+
+export type Webhook = {
+  id: string;
+  rhank_id: string;
+  url: string;
+  events: string[];
+  secret: string;
+  active: boolean;
+  created_at: string;
+};
+
+export const WEBHOOK_EVENTS = ["entry.created", "member.approved", "member.joined"] as const;
+export type WebhookEvent = typeof WEBHOOK_EVENTS[number];
+
+export const REACTION_EMOJIS = ["🔥", "👏", "💪", "🏆", "😱"] as const;
+export type ReactionEmoji = typeof REACTION_EMOJIS[number];
+
+export type EntryReaction = {
+  id: string;
+  entry_id: string;
+  user_id: string | null;
+  emoji: ReactionEmoji;
   created_at: string;
 };

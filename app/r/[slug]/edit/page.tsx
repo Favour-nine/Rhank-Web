@@ -7,6 +7,8 @@ import { supabase, type Rhank } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import AppNav from "@/components/AppNav";
 import ThreeBg from "@/components/ThreeBg";
+import { INPUT_CLS, BTN_PRIMARY, BTN_GHOST } from "@/lib/ui";
+import Field from "@/components/Field";
 
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400" });
 
@@ -16,7 +18,7 @@ export default function EditRhankPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [rhank, setRhank] = useState<Rhank | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", unit: "", direction: "high", join_mode: "open" });
+  const [form, setForm] = useState({ title: "", description: "", unit: "", direction: "high", join_mode: "open", reset_schedule: "", moderation_enabled: false });
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "deleting">("idle");
   const [error, setError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -35,6 +37,8 @@ export default function EditRhankPage() {
         unit: data.unit ?? "",
         direction: data.direction,
         join_mode: data.join_mode,
+        reset_schedule: data.reset_schedule ?? "",
+        moderation_enabled: data.moderation_enabled ?? false,
       });
     });
   }, [slug, router]);
@@ -159,20 +163,75 @@ export default function EditRhankPage() {
             </div>
           </div>
 
+          {/* Moderation queue (score rhanks only) */}
+          {rhank?.type === "score" && (
+            <div>
+              <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Entry moderation</label>
+              <p className="text-[11px] text-white/35 mb-3">When enabled, new entries are held for your approval before appearing on the board.</p>
+              <div className="grid grid-cols-2 gap-3 max-w-xs">
+                {([
+                  { value: false, label: "Off" },
+                  { value: true, label: "On" },
+                ] as const).map((opt) => (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, moderation_enabled: opt.value }))}
+                    className={`border py-3 px-3 text-left transition-all ${
+                      form.moderation_enabled === opt.value
+                        ? "border-white bg-white text-[#1a5fff]"
+                        : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-[11px] font-bold tracking-[0.15em] uppercase">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reset schedule */}
+          <div>
+            <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60">Auto-reset schedule</label>
+            <p className="text-[11px] text-white/35 mb-3">
+              {rhank?.type === "score" ? "Clears all entries on a schedule." : "Resets all member balances and transactions on a schedule."}
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { value: "", label: "Off" },
+                { value: "weekly", label: "Weekly" },
+                { value: "monthly", label: "Monthly" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => set("reset_schedule", opt.value)}
+                  className={`border py-3 px-3 text-left transition-all ${
+                    form.reset_schedule === opt.value
+                      ? "border-white bg-white text-[#1a5fff]"
+                      : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
+                  }`}
+                >
+                  <span className="text-[11px] font-bold tracking-[0.15em] uppercase">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && <p className="text-sm text-[#ffe600] border border-[#ffe600]/30 bg-[#ffe600]/10 px-4 py-3">{error}</p>}
 
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={status === "loading"}
-              className="flex-1 bg-[#ffe600] px-5 py-4 text-sm font-bold tracking-[0.18em] uppercase text-black hover:bg-[#ffe600]/90 disabled:opacity-50 transition-colors"
+              className={`flex-1 ${BTN_PRIMARY} py-4`}
             >
               {status === "loading" ? "Saving..." : "Save changes"}
             </button>
             <button
               type="button"
               onClick={() => router.push(`/r/${slug}`)}
-              className="border border-white/25 px-5 py-4 text-sm font-semibold tracking-[0.18em] uppercase text-white hover:bg-white/10 transition-colors"
+              className={`${BTN_GHOST} py-4`}
             >
               Cancel
             </button>
@@ -216,13 +275,5 @@ export default function EditRhankPage() {
   );
 }
 
-const inputCls = "w-full border border-white/20 bg-white/10 backdrop-blur px-4 py-3 text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors";
+const inputCls = INPUT_CLS;
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-semibold tracking-[0.18em] uppercase text-white/60 mb-2 block">{label}</label>
-      {children}
-    </div>
-  );
-}
