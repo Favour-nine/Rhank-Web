@@ -301,9 +301,15 @@ export default function TokenLeaderboard({ slug, rhank, isOwner, user }: {
 
         {/* Meta row */}
         <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40">
-            By {rhank.creator_name}
-          </span>
+          {rhank.user_id ? (
+            <Link href={`/u/${rhank.user_id}`} className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 hover:text-white/70 transition-colors">
+              By {rhank.creator_name}
+            </Link>
+          ) : (
+            <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40">
+              By {rhank.creator_name}
+            </span>
+          )}
           <span className="text-[10px] tracking-[0.18em] uppercase text-white/30 bg-white/10 px-2 py-0.5">
             🪙 Token Rhank
           </span>

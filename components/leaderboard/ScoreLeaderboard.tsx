@@ -143,9 +143,15 @@ export default function ScoreLeaderboard({ slug, rhank, isOwner, user }: {
 
         {/* Meta row */}
         <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40">
-            By {rhank.creator_name}
-          </span>
+          {rhank.user_id ? (
+            <Link href={`/u/${rhank.user_id}`} className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 hover:text-white/70 transition-colors">
+              By {rhank.creator_name}
+            </Link>
+          ) : (
+            <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40">
+              By {rhank.creator_name}
+            </span>
+          )}
           {rhank.location_name && (
             <>
               <span className="text-white/20">·</span>
